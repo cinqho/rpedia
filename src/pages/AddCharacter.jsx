@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 import { LeftShape, RightShape } from '../components/FormShapes'
+import { useLocation } from 'react-router-dom'
 
 const universes = ['Naruto', 'One Piece', 'Bleach', 'Dragon Ball', 'Autre']
 
@@ -27,6 +28,7 @@ const labelStyle = {
 }
 
 function AddCharacter() {
+  const location = useLocation()
   const [form, setForm] = useState({
     rp_name: '',
     surname: '',
@@ -49,19 +51,25 @@ function AddCharacter() {
   const [pendingCount, setPendingCount] = useState(0)
 
   useEffect(() => {
+    setSuccess(false)
+    setPendingCount(0)
+
     supabase.auth.getSession().then(({ data }) => {
       const u = data.session?.user ?? null
       setUser(u)
-      if (u) fetchPendingCount(u.id)
+      if (u) fetchPendingCount(u.id) // 👈 u.id et non user.id
     })
-  }, [])
+  }, [location.key])
 
   async function fetchPendingCount(userId) {
-    const { count } = await supabase
+    const { count, error } = await supabase
       .from('characters')
       .select('*', { count: 'exact', head: true })
       .eq('author_id', userId)
       .eq('status', 'pending')
+    
+    console.log('pending count:', count, 'error:', error)
+    console.log('fetching for userId:', userId)
     setPendingCount(count ?? 0)
   }
 
@@ -70,6 +78,7 @@ function AddCharacter() {
   }
 
   async function handleSubmit() {
+    console.log('insert with author_id:', user.id)
     if (!user) return setError("Tu dois être connecté avec Discord pour proposer un personnage.")
     if (!accepted) return setError("Tu dois accepter la modération.")
     if (!form.rp_name || !form.universe || !form.server) return setError("Nom RP, univers et serveur sont obligatoires.")
@@ -87,7 +96,10 @@ function AddCharacter() {
       }])
 
     if (error) setError(error.message)
-    else setSuccess(true)
+    else {
+      await fetchPendingCount(user.id)
+      setSuccess(true)
+    }
 
     setLoading(false)
   }
