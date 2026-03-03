@@ -75,7 +75,7 @@ function Sidebar() {
       {/* Logo */}
       <div className="p-6 flex items-center gap-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <img
-          src="/src/assets/Logo_RPedia.png"
+          src="/Logo_RPedia.png"
           alt="RPedia"
           style={{ width: '36px', height: '36px', objectFit: 'contain' }}
         />

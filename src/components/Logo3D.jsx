@@ -20,7 +20,7 @@ function Logo3D() {
 
       {/* Logo */}
       <img
-        src="/src/assets/Logo_RPedia.png"
+        src="/Logo_RPedia.png"
         alt="RPedia"
         className="relative z-10"
         style={{ width: '600px', height: '600px', objectFit: 'contain' }}
