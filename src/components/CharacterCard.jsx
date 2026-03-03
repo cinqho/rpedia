@@ -1,117 +1,63 @@
 const rarities = {
-  NORMAL: {
-    label: 'NORMAL',
-    color: '#9CA3AF',
-    bg: '#1a1a2e',
-    pattern: null,
-    stars: 0,
-  },
-  SHINY: {
-    label: '✦ SHINY',
-    color: '#38BDF8',
-    bg: '#0c1a2e',
-    pattern: 'diamonds',
-    stars: 3,
-  },
-  LEGEND: {
-    label: '★ LEGEND',
-    color: '#fbc059',
-    bg: '#1a1200',
-    pattern: 'triangles',
-    stars: 5,
-  },
-  SECRET: {
-    label: '◈ SECRET',
-    color: '#A855F7',
-    bg: '#120a1a',
-    pattern: 'dots',
-    stars: 4,
-  },
-  'COUP DE COEUR': {
-    label: '💛 COUP DE COEUR',
-    color: '#F472B6',
-    bg: '#1a0a14',
-    pattern: 'diamonds',
-    stars: 4,
-  },
-  'EQUIPE RPEDIA': {
-    label: '⚜️ EQUIPE RPEDIA',
-    color: '#fbc059',
-    bg: '#0a0a0a',
-    pattern: 'triangles',
-    stars: 6,
-  },
+  NORMAL: { label: 'NORMAL', color: '#9CA3AF', bg: '#1a1a2e', pattern: null, stars: 0 },
+  SHINY: { label: '✦ SHINY', color: '#38BDF8', bg: '#0c1a2e', pattern: 'diamonds', stars: 3 },
+  LEGEND: { label: '★ LEGEND', color: '#fbc059', bg: '#1a1200', pattern: 'triangles', stars: 5 },
+  SECRET: { label: '◈ SECRET', color: '#A855F7', bg: '#120a1a', pattern: 'dots', stars: 4 },
+  'COUP DE COEUR': { label: '💛 COUP DE COEUR', color: '#F472B6', bg: '#1a0a14', pattern: 'diamonds', stars: 4 },
+  'EQUIPE RPEDIA': { label: '⚜️ EQUIPE RPEDIA', color: '#fbc059', bg: '#0a0a0a', pattern: 'triangles', stars: 6 },
 }
 
 const rankColors = {
+  'S+': '#ff4ecd',
   S: '#fbc059',
   A: '#34D399',
   B: '#38BDF8',
   C: '#9CA3AF',
+  D: '#6B7280',
 }
 
 function PatternOverlay({ type, color }) {
   if (!type) return null
-
-  if (type === 'diamonds') {
-    return (
-      <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1, opacity: 0.07 }}>
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id={`diamonds-${color}`} x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-              <polygon points="10,2 18,10 10,18 2,10" fill={color} />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill={`url(#diamonds-${color})`} />
-        </svg>
-      </div>
-    )
-  }
-
-  if (type === 'triangles') {
-    return (
-      <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1, opacity: 0.07 }}>
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id={`triangles-${color}`} x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-              <polygon points="10,2 18,18 2,18" fill={color} />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill={`url(#triangles-${color})`} />
-        </svg>
-      </div>
-    )
-  }
-
-  if (type === 'dots') {
-    return (
-      <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1, opacity: 0.1 }}>
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id={`dots-${color}`} x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
-              <circle cx="8" cy="8" r="2" fill={color} />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill={`url(#dots-${color})`} />
-        </svg>
-      </div>
-    )
-  }
-
+  if (type === 'diamonds') return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1, opacity: 0.07 }}>
+      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs><pattern id={`diamonds-${color}`} x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+          <polygon points="10,2 18,10 10,18 2,10" fill={color} />
+        </pattern></defs>
+        <rect width="100%" height="100%" fill={`url(#diamonds-${color})`} />
+      </svg>
+    </div>
+  )
+  if (type === 'triangles') return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1, opacity: 0.07 }}>
+      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs><pattern id={`triangles-${color}`} x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+          <polygon points="10,2 18,18 2,18" fill={color} />
+        </pattern></defs>
+        <rect width="100%" height="100%" fill={`url(#triangles-${color})`} />
+      </svg>
+    </div>
+  )
+  if (type === 'dots') return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1, opacity: 0.1 }}>
+      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs><pattern id={`dots-${color}`} x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
+          <circle cx="8" cy="8" r="2" fill={color} />
+        </pattern></defs>
+        <rect width="100%" height="100%" fill={`url(#dots-${color})`} />
+      </svg>
+    </div>
+  )
   return null
 }
 
 function Stars({ count, color }) {
   if (!count) return null
   const positions = [
-    { top: '8%', left: '8%' },
-    { top: '12%', right: '12%' },
-    { bottom: '30%', left: '5%' },
-    { bottom: '28%', right: '6%' },
-    { top: '45%', left: '3%' },
-    { top: '55%', right: '4%' },
+    { top: '8%', left: '8%' }, { top: '12%', right: '12%' },
+    { bottom: '30%', left: '5%' }, { bottom: '28%', right: '6%' },
+    { top: '45%', left: '3%' }, { top: '55%', right: '4%' },
   ].slice(0, count)
-
   return (
     <>
       {positions.map((pos, i) => (
@@ -125,10 +71,8 @@ function Stars({ count, color }) {
 
 function CharacterCard({ character, onClick }) {
   const universeColors = {
-    'Naruto': '#FF6B00',
-    'One Piece': '#FF2D55',
-    'Bleach': '#A855F7',
-    'Dragon Ball': '#FFE500',
+    'Naruto': '#FF6B00', 'One Piece': '#FF2D55',
+    'Bleach': '#A855F7', 'Dragon Ball': '#FFE500',
   }
 
   const rarity = rarities[character.rarity] || rarities.NORMAL
@@ -153,24 +97,13 @@ function CharacterCard({ character, onClick }) {
         aspectRatio: '3/4',
       }}
     >
-      {/* Motif de fond */}
       <PatternOverlay type={rarity.pattern} color={rarity.color} />
-
-      {/* Étoiles décoratives */}
       <Stars count={rarity.stars} color={rarity.color} />
 
-      {/* Barre du haut colorée */}
-      <div style={{
-        height: '4px',
-        background: `linear-gradient(to right, transparent, ${rarity.color}, transparent)`,
-        flexShrink: 0,
-        zIndex: 3,
-      }} />
+      <div style={{ height: '4px', background: `linear-gradient(to right, transparent, ${rarity.color}, transparent)`, flexShrink: 0, zIndex: 3 }} />
 
-      {/* Badge rareté + univers */}
       <div className="relative z-10 flex items-center justify-between px-3 pt-2 pb-1">
-        <span className="font-mono font-bold tracking-widest whitespace-nowrap"
-          style={{ color: rarity.color, fontSize: '0.55rem' }}>
+        <span className="font-mono font-bold tracking-widest whitespace-nowrap" style={{ color: rarity.color, fontSize: '0.55rem' }}>
           {rarity.label}
         </span>
         {character.player && (
@@ -180,7 +113,6 @@ function CharacterCard({ character, onClick }) {
         )}
       </div>
 
-      {/* Image */}
       <div className="relative z-3 flex-1 overflow-hidden mx-2 rounded-xl" style={{ minHeight: '160px' }}>
         <img
           src={character.image_url || "https://static.vecteezy.com/ti/vecteur-libre/p1/35129568-silhouette-de-inconnue-la-personne-avec-visage-cache-couvert-et-masque-mysterieux-etrange-homme-anonyme-personnage-vecteur-illustration-isole-sur-blanc-contexte-gratuit-vectoriel.jpg"}
@@ -188,14 +120,11 @@ function CharacterCard({ character, onClick }) {
           className="w-full h-full object-cover object-top"
           style={!character.image_url ? { filter: 'brightness(0.4)' } : {}}
         />
-        <div className="absolute bottom-0 left-0 right-0 h-12"
-          style={{ background: `linear-gradient(to top, ${rarity.bg}, transparent)` }} />
+        <div className="absolute bottom-0 left-0 right-0 h-12" style={{ background: `linear-gradient(to top, ${rarity.bg}, transparent)` }} />
       </div>
 
-      {/* Nom */}
       <div className="relative z-10 px-3 pt-2 pb-1 text-center">
-        <h2 className="font-bold tracking-widest uppercase leading-tight"
-          style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.1rem', color: '#ffffff' }}>
+        <h2 className="font-bold tracking-widest uppercase leading-tight" style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.1rem', color: '#ffffff' }}>
           {character.rp_name}
         </h2>
         {character.surname && (
@@ -205,44 +134,29 @@ function CharacterCard({ character, onClick }) {
         )}
       </div>
 
-      {/* Séparateur */}
-      <div className="mx-3 relative z-10"
-        style={{ height: '1px', background: `linear-gradient(to right, transparent, ${rarity.color}80, transparent)` }} />
+      <div className="mx-3 relative z-10" style={{ height: '1px', background: `linear-gradient(to right, transparent, ${rarity.color}80, transparent)` }} />
 
-      {/* Stats */}
       <div className="relative z-10 grid grid-cols-4 gap-1 px-3 py-2">
         {stats.map((stat) => (
           <div key={stat.label} className="flex flex-col items-center">
-            <span className="font-bold leading-none"
-              style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.1rem', color: rankColors[stat.value] || '#9CA3AF' }}>
+            <span className="font-bold leading-none" style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.1rem', color: rankColors[stat.value] || '#9CA3AF' }}>
               {stat.value}
             </span>
-            <span className="font-mono"
-              style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.55rem' }}>
+            <span className="font-mono" style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.55rem' }}>
               {stat.label}
             </span>
           </div>
         ))}
       </div>
 
-      {/* Footer */}
       <div className="relative z-10 px-3 pb-2 flex items-center justify-between">
-        <span className="font-mono" style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.55rem' }}>
-          {character.server}
-        </span>
+        <span className="font-mono" style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.55rem' }}>{character.server}</span>
         <span className="font-mono flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.55rem' }}>
           ♥ {character.likes_count ?? 0}
         </span>
       </div>
 
-      {/* Barre du bas colorée */}
-      <div style={{
-        height: '4px',
-        background: `linear-gradient(to right, transparent, ${rarity.color}, transparent)`,
-        flexShrink: 0,
-        zIndex: 3,
-      }} />
-
+      <div style={{ height: '4px', background: `linear-gradient(to right, transparent, ${rarity.color}, transparent)`, flexShrink: 0, zIndex: 3 }} />
     </div>
   )
 }

@@ -5,6 +5,15 @@ import { useLocation } from 'react-router-dom'
 
 const universes = ['Naruto', 'One Piece', 'Bleach', 'Dragon Ball', 'Autre']
 
+const statOptions = [
+  { value: 'S+', label: 'S+ — Divin' },
+  { value: 'S', label: 'S — Légendaire' },
+  { value: 'A', label: 'A — Excellent' },
+  { value: 'B', label: 'B — Solide' },
+  { value: 'C', label: 'C — Moyen' },
+  { value: 'D', label: 'D — Faible' },
+]
+
 const inputStyle = {
   background: 'rgba(255,255,255,0.04)',
   border: '1px solid rgba(255,255,255,0.12)',
@@ -53,11 +62,10 @@ function AddCharacter() {
   useEffect(() => {
     setSuccess(false)
     setPendingCount(0)
-
     supabase.auth.getSession().then(({ data }) => {
       const u = data.session?.user ?? null
       setUser(u)
-      if (u) fetchPendingCount(u.id) // 👈 u.id et non user.id
+      if (u) fetchPendingCount(u.id)
     })
   }, [location.key])
 
@@ -67,9 +75,6 @@ function AddCharacter() {
       .select('*', { count: 'exact', head: true })
       .eq('author_id', userId)
       .eq('status', 'pending')
-    
-    console.log('pending count:', count, 'error:', error)
-    console.log('fetching for userId:', userId)
     setPendingCount(count ?? 0)
   }
 
@@ -78,7 +83,6 @@ function AddCharacter() {
   }
 
   async function handleSubmit() {
-    console.log('insert with author_id:', user.id)
     if (!user) return setError("Tu dois être connecté avec Discord pour proposer un personnage.")
     if (!accepted) return setError("Tu dois accepter la modération.")
     if (!form.rp_name || !form.universe || !form.server) return setError("Nom RP, univers et serveur sont obligatoires.")
@@ -89,11 +93,7 @@ function AddCharacter() {
 
     const { error } = await supabase
       .from('characters')
-      .insert([{
-        ...form,
-        status: 'pending',
-        author_id: user.id,
-      }])
+      .insert([{ ...form, status: 'pending', author_id: user.id }])
 
     if (error) setError(error.message)
     else {
@@ -107,15 +107,10 @@ function AddCharacter() {
   if (!user) {
     return (
       <div className="relative w-full h-full flex items-center justify-center">
-        <LeftShape />
-        <RightShape />
+        <LeftShape /><RightShape />
         <div className="text-center relative z-10">
-          <h2 className="text-4xl mb-4" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#fbc059' }}>
-            Connexion requise
-          </h2>
-          <p className="font-mono text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
-            Connecte-toi avec Discord via la sidebar pour proposer un personnage.
-          </p>
+          <h2 className="text-4xl mb-4" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#fbc059' }}>Connexion requise</h2>
+          <p className="font-mono text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>Connecte-toi avec Discord via la sidebar pour proposer un personnage.</p>
         </div>
       </div>
     )
@@ -124,14 +119,11 @@ function AddCharacter() {
   if (success) {
     return (
       <div className="relative w-full h-full flex items-center justify-center">
-        <LeftShape />
-        <RightShape />
+        <LeftShape /><RightShape />
         <div className="text-center relative z-10">
-          <h2 className="text-4xl mb-4" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#fbc059' }}>
-            Proposition envoyée !
-          </h2>
+          <h2 className="text-4xl mb-4" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#fbc059' }}>Proposition envoyée !</h2>
           <p className="font-mono text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
-            Ton personnage sera examiné avant publication. ({pendingCount + 1}/5 slots utilisés)
+            Ton personnage sera examiné avant publication. ({pendingCount}/5 slots utilisés)
           </p>
         </div>
       </div>
@@ -140,12 +132,9 @@ function AddCharacter() {
 
   return (
     <div className="relative w-full h-full">
-      <LeftShape />
-      <RightShape />
-
+      <LeftShape /><RightShape />
       <div className="relative z-10 p-8 max-w-2xl mx-auto">
 
-        {/* Header */}
         <div className="mb-8 flex items-start justify-between">
           <div>
             <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '3rem', letterSpacing: '0.05em', color: '#ffffff' }}>
@@ -180,59 +169,49 @@ function AddCharacter() {
 
             <div>
               <label style={labelStyle}>Nom RP *</label>
-              <input name="rp_name" value={form.rp_name} onChange={handleChange}
-                placeholder="ex: Sasuke Uchiha" style={inputStyle} />
+              <input name="rp_name" value={form.rp_name} onChange={handleChange} placeholder="ex: Sasuke Uchiha" style={inputStyle} />
             </div>
 
             <div>
               <label style={labelStyle}>Surnom</label>
-              <input name="surname" value={form.surname} onChange={handleChange}
-                placeholder="ex: Sasuke" style={inputStyle} />
+              <input name="surname" value={form.surname} onChange={handleChange} placeholder="ex: Sasuke" style={inputStyle} />
             </div>
 
             <div>
               <label style={labelStyle}>Univers *</label>
               <select name="universe" value={form.universe} onChange={handleChange} style={inputStyle}>
                 <option value="" style={{ background: '#0a0a0a' }}>Choisir un univers</option>
-                {universes.map(u => (
-                  <option key={u} value={u} style={{ background: '#0a0a0a' }}>{u}</option>
-                ))}
+                {universes.map(u => <option key={u} value={u} style={{ background: '#0a0a0a' }}>{u}</option>)}
               </select>
             </div>
 
             <div>
               <label style={labelStyle}>Serveur *</label>
-              <input name="server" value={form.server} onChange={handleChange}
-                placeholder="ex: Konoha-RP" style={inputStyle} />
+              <input name="server" value={form.server} onChange={handleChange} placeholder="ex: Konoha-RP" style={inputStyle} />
             </div>
 
             <div>
               <label style={labelStyle}>Joueur (pseudo)</label>
-              <input name="player" value={form.player} onChange={handleChange}
-                placeholder="ex: Cinqho" style={inputStyle} />
+              <input name="player" value={form.player} onChange={handleChange} placeholder="ex: Cinqho" style={inputStyle} />
             </div>
 
             <div>
               <label style={labelStyle}>Description courte</label>
               <textarea name="description" value={form.description} onChange={handleChange}
-                placeholder="Résume le personnage en quelques mots..."
-                rows={3} style={{ ...inputStyle, resize: 'none' }} />
+                placeholder="Résume le personnage en quelques mots..." rows={3} style={{ ...inputStyle, resize: 'none' }} />
             </div>
 
             <div>
               <label style={labelStyle}>Histoire RP / Legacy</label>
               <textarea name="legacy" value={form.legacy} onChange={handleChange}
-                placeholder="Raconte l'histoire de ce personnage sur le serveur..."
-                rows={5} style={{ ...inputStyle, resize: 'none' }} />
+                placeholder="Raconte l'histoire de ce personnage sur le serveur..." rows={5} style={{ ...inputStyle, resize: 'none' }} />
             </div>
 
             <div>
               <label style={labelStyle}>URL Image</label>
-              <input name="image_url" value={form.image_url} onChange={handleChange}
-                placeholder="https://..." style={inputStyle} />
+              <input name="image_url" value={form.image_url} onChange={handleChange} placeholder="https://..." style={inputStyle} />
             </div>
 
-            {/* Stats proposées */}
             <div>
               <label style={labelStyle}>Stats proposées</label>
               <p className="font-mono text-xs mb-3" style={{ color: 'rgba(255,255,255,0.2)' }}>
@@ -248,10 +227,9 @@ function AddCharacter() {
                   <div key={stat.name}>
                     <label style={{ ...labelStyle, fontSize: '0.6rem' }}>{stat.label}</label>
                     <select name={stat.name} value={form[stat.name]} onChange={handleChange} style={inputStyle}>
-                      <option value="S" style={{ background: '#0a0a0a' }}>S — Légendaire</option>
-                      <option value="A" style={{ background: '#0a0a0a' }}>A — Excellent</option>
-                      <option value="B" style={{ background: '#0a0a0a' }}>B — Solide</option>
-                      <option value="C" style={{ background: '#0a0a0a' }}>C — Moyen</option>
+                      {statOptions.map(o => (
+                        <option key={o.value} value={o.value} style={{ background: '#0a0a0a' }}>{o.label}</option>
+                      ))}
                     </select>
                   </div>
                 ))}
@@ -268,9 +246,7 @@ function AddCharacter() {
               </p>
             </div>
 
-            {error && (
-              <p className="text-xs font-mono" style={{ color: '#FF2D55' }}>{error}</p>
-            )}
+            {error && <p className="text-xs font-mono" style={{ color: '#FF2D55' }}>{error}</p>}
 
             <button
               onClick={handleSubmit}
