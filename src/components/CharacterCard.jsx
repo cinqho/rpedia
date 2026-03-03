@@ -173,6 +173,11 @@ function CharacterCard({ character, onClick }) {
           style={{ color: rarity.color, fontSize: '0.55rem' }}>
           {rarity.label}
         </span>
+        {character.player && (
+          <span className="font-mono" style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.55rem' }}>
+            {character.player}
+          </span>
+        )}
       </div>
 
       {/* Image */}
