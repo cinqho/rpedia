@@ -8,7 +8,7 @@ function Home() {
       <KanjiBackground />
 
       <img
-        src="/src/assets/manga-bg.png"
+        src="manga-bg.png"
         style={{
           position: 'absolute',
           inset: 0,
