@@ -1,13 +1,15 @@
 function PageWrapper({ children, scroll = true }) {
   return (
-    <div style={{ padding: '16px 16px 16px 12px', marginLeft: '244px' }}>
+    <div className="md:ml-[244px] p-2 md:p-[16px_16px_16px_12px] pt-14 md:pt-4">
       <div style={{
         borderRadius: '16px',
-        height: 'calc(100vh - 32px)',
+        height: 'calc(100vh - 72px)',
         position: 'relative',
         overflow: 'hidden',
         border: '1px solid rgba(255,255,255,0.08)',
-      }}>
+      }}
+      className="md:h-[calc(100vh-32px)]"
+      >
         {/* Background fixe */}
         <div
           className="absolute inset-0"
@@ -27,21 +29,8 @@ function PageWrapper({ children, scroll = true }) {
         <div style={{ position: 'absolute', left: 0, top: '20%', width: '1px', height: '60%', background: 'linear-gradient(to bottom, transparent, #fbc059, transparent)', opacity: 0.4, zIndex: 1 }} />
         {/* Liseré droit */}
         <div style={{ position: 'absolute', right: 0, top: '20%', width: '1px', height: '60%', background: 'linear-gradient(to bottom, transparent, #fbc059, transparent)', opacity: 0.4, zIndex: 1 }} />
-        
-        {/* Scan line — désactivé
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px)',
-            pointerEvents: 'none',
-            borderRadius: '16px',
-            zIndex: 2,
-          }}
-        />
-        */}
 
-        {/* Contenu scrollable séparé */}
+        {/* Contenu scrollable */}
         <div style={{
           position: 'relative',
           zIndex: 10,
