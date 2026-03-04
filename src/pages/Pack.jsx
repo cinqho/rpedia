@@ -1,6 +1,49 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
-import CharacterCard, { rollRarity, rarities } from '../components/CharacterCard'
+import CharacterCard, { rollRarity, rarities, RARITY_WEIGHTS } from '../components/CharacterCard'
+
+function DropRates() {
+  const [open, setOpen] = useState(false)
+  const total = RARITY_WEIGHTS.reduce((s, r) => s + r.weight, 0)
+
+  return (
+    <div className="mt-6">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="font-mono text-xs tracking-widest flex items-center gap-2 transition-all duration-200 hover:opacity-80"
+        style={{ color: 'rgba(255,255,255,0.3)' }}
+      >
+        <span style={{ color: '#fbc059' }}>{open ? '▼' : '▶'}</span>
+        TAUX DE DROP
+      </button>
+
+      {open && (
+        <div className="mt-3 rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex flex-col gap-2">
+            {RARITY_WEIGHTS.map(({ rarity, weight }) => {
+              const r = rarities[rarity]
+              const pct = (weight / total * 100).toFixed(1)
+              const barW = Math.max(2, (weight / total) * 100)
+              return (
+                <div key={rarity} className="flex items-center gap-3">
+                  <span className="font-mono text-xs w-40 flex-shrink-0" style={{ color: r?.color || '#9CA3AF' }}>
+                    {r?.label || rarity}
+                  </span>
+                  <div className="flex-1 h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                    <div className="h-full rounded-full" style={{ width: `${barW}%`, background: r?.color || '#9CA3AF', opacity: 0.8 }} />
+                  </div>
+                  <span className="font-mono text-xs w-10 text-right flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                    {pct}%
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 function Booster({ server, selected, onClick, disabled }) {
   const isGeneral = server === 'general'
@@ -187,6 +230,8 @@ function Pack() {
           {!selectedServer && (
             <p className="text-center font-mono text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Sélectionne un pack pour continuer</p>
           )}
+
+          <DropRates />
         </>
       )}
 
