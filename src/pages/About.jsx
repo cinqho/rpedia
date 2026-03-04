@@ -10,13 +10,15 @@ function About() {
 
   return (
     <div className="relative w-full h-full">
-      <LeftShape />
-      <RightShape />
+      {/* Conteneur shapes isolé pour éviter le débordement */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <LeftShape />
+        <RightShape />
+      </div>
 
       <div className="relative z-10 p-8 max-w-2xl mx-auto">
         <PageTransition>
 
-          {/* Header */}
           <FadeItem delay={0.1}>
             <div className="mb-10">
               <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '3rem', letterSpacing: '0.05em', color: '#ffffff' }}>
@@ -26,7 +28,6 @@ function About() {
             </div>
           </FadeItem>
 
-          {/* Intro */}
           <FadeItem delay={0.2}>
             <div className="rounded-xl p-6 mb-6"
               style={{ background: 'rgba(251,192,89,0.04)', border: '1px solid rgba(251,192,89,0.1)' }}>
@@ -38,7 +39,6 @@ function About() {
             </div>
           </FadeItem>
 
-          {/* Valeurs */}
           <FadeItem delay={0.3}>
             <div className="flex flex-col gap-4 mb-8">
               {[
@@ -55,16 +55,13 @@ function About() {
                       style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.1rem', color: '#fbc059' }}>
                       {item.title}
                     </h3>
-                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                      {item.desc}
-                    </p>
+                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>{item.desc}</p>
                   </div>
                 </div>
               ))}
             </div>
           </FadeItem>
 
-          {/* Comment contribuer */}
           <FadeItem delay={0.4}>
             <div className="rounded-xl p-6 mb-8"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -83,16 +80,13 @@ function About() {
                       style={{ background: 'rgba(251,192,89,0.15)', color: '#fbc059', border: '1px solid rgba(251,192,89,0.3)' }}>
                       {i + 1}
                     </span>
-                    <p className="text-sm font-mono" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                      {step}
-                    </p>
+                    <p className="text-sm font-mono" style={{ color: 'rgba(255,255,255,0.5)' }}>{step}</p>
                   </div>
                 ))}
               </div>
             </div>
           </FadeItem>
 
-          {/* Mentions légales / Équipe */}
           <FadeItem delay={0.5}>
             <div className="rounded-xl p-6"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -103,8 +97,7 @@ function About() {
                 {team.map((group, i) => (
                   <div key={i} className="flex items-start justify-between py-3"
                     style={{ borderBottom: i < team.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-                    <p className="text-xs font-mono tracking-widest uppercase"
-                      style={{ color: 'rgba(255,255,255,0.3)' }}>
+                    <p className="text-xs font-mono tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>
                       {group.role}
                     </p>
                     <div className="flex gap-2 flex-wrap justify-end">

@@ -132,7 +132,9 @@ function AddCharacter() {
 
   return (
     <div className="relative w-full h-full">
-      <LeftShape /><RightShape />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <LeftShape /><RightShape />
+      </div>
       <div className="relative z-10 p-8 max-w-2xl mx-auto">
 
         <div className="mb-8 flex items-start justify-between">
