@@ -1,10 +1,35 @@
-const rarities = {
+export const rarities = {
   NORMAL: { label: 'NORMAL', color: '#9CA3AF', bg: '#1a1a2e', pattern: null, stars: 0 },
-  SHINY: { label: '✦ SHINY', color: '#38BDF8', bg: '#0c1a2e', pattern: 'diamonds', stars: 3 },
-  LEGEND: { label: '★ LEGEND', color: '#fbc059', bg: '#1a1200', pattern: 'triangles', stars: 5 },
-  SECRET: { label: '◈ SECRET', color: '#A855F7', bg: '#120a1a', pattern: 'dots', stars: 4 },
-  'COUP DE COEUR': { label: '💛 COUP DE COEUR', color: '#F472B6', bg: '#1a0a14', pattern: 'diamonds', stars: 4 },
-  'EQUIPE RPEDIA': { label: '⚜️ EQUIPE RPEDIA', color: '#fbc059', bg: '#0a0a0a', pattern: 'triangles', stars: 6 },
+  'VETERAN': { label: '⚔ VÉTÉRAN', color: '#34D399', bg: '#0a1a12', pattern: null, stars: 1 },
+  'ELITE': { label: '◆ ÉLITE', color: '#38BDF8', bg: '#0c1a2e', pattern: null, stars: 2 },
+  'EPIQUE': { label: '✦ ÉPIQUE', color: '#A855F7', bg: '#120a1a', pattern: 'dots', stars: 3 },
+  'LEGEND': { label: '★ LÉGENDAIRE', color: '#fbc059', bg: '#1a1200', pattern: 'triangles', stars: 5 },
+  'COUP DE COEUR': { label: '💛 COUP DE CŒUR', color: '#F472B6', bg: '#1a0a14', pattern: 'diamonds', stars: 4 },
+  'RPEDIA VALIDATION': { label: '⚜️ RPÉDIA VALIDATION', color: '#fbc059', bg: '#0a0a0a', pattern: 'triangles', stars: 6 },
+  'SHINY': { label: '✦ SHINY', color: '#67E8F9', bg: '#0c1a2e', pattern: 'diamonds', stars: 3 },
+  'SECRET': { label: '◈ SECRET', color: '#F472B6', bg: '#1a0014', pattern: 'dots', stars: 4 },
+}
+
+export const RARITY_WEIGHTS = [
+  { rarity: 'SECRET',           weight: 0.1  },
+  { rarity: 'SHINY',            weight: 0.4  },
+  { rarity: 'RPEDIA VALIDATION',weight: 0.5  },
+  { rarity: 'COUP DE COEUR',    weight: 1    },
+  { rarity: 'LEGEND',           weight: 3    },
+  { rarity: 'EPIQUE',           weight: 10   },
+  { rarity: 'ELITE',            weight: 15   },
+  { rarity: 'VETERAN',          weight: 25   },
+  { rarity: 'NORMAL',           weight: 45   },
+]
+
+export function rollRarity() {
+  const total = RARITY_WEIGHTS.reduce((s, r) => s + r.weight, 0)
+  let rand = Math.random() * total
+  for (const { rarity, weight } of RARITY_WEIGHTS) {
+    rand -= weight
+    if (rand <= 0) return rarity
+  }
+  return 'NORMAL'
 }
 
 const rankColors = {
