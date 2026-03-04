@@ -133,27 +133,37 @@ function Pack() {
       return alert("Pas assez de personnages disponibles pour ouvrir ce pack !")
     }
 
-    // Pour chaque carte on tire une rareté, puis on cherche un perso de cette rareté
-    // Si aucun perso de cette rareté dispo, on prend au hasard parmi les disponibles
+    // Grouper les persos disponibles par rareté
+    const byRarity = {}
+    for (const c of available) {
+      const r = c.rarity || 'NORMAL'
+      if (!byRarity[r]) byRarity[r] = []
+      byRarity[r].push(c)
+    }
+
     const picked = []
     const usedIds = new Set()
 
     for (let i = 0; i < 3; i++) {
-      const rolledRarity = rollRarity()
-      const sameRarity = available.filter(c => c.rarity === rolledRarity && !usedIds.has(c.id))
-      let chosen
-
-      if (sameRarity.length > 0) {
-        chosen = sameRarity[Math.floor(Math.random() * sameRarity.length)]
-      } else {
-        // Fallback : n'importe quel perso dispo pas encore choisi
+      // Tirer une rareté jusqu'à en trouver une qui a des persos dispo
+      let chosen = null
+      let attempts = 0
+      while (!chosen && attempts < 100) {
+        attempts++
+        const rolledRarity = rollRarity()
+        const pool = (byRarity[rolledRarity] || []).filter(c => !usedIds.has(c.id))
+        if (pool.length > 0) {
+          chosen = pool[Math.floor(Math.random() * pool.length)]
+        }
+      }
+      // Fallback ultime si aucune rareté matchée après 100 essais
+      if (!chosen) {
         const rest = available.filter(c => !usedIds.has(c.id))
+        if (rest.length === 0) break
         chosen = rest[Math.floor(Math.random() * rest.length)]
       }
-
       usedIds.add(chosen.id)
-      // On applique la rareté tirée même si le perso n'avait pas cette rareté en base
-      picked.push({ ...chosen, rarity: rolledRarity })
+      picked.push(chosen) // rareté = celle stockée en base
     }
 
     await supabase.from('deck').insert(picked.map(c => ({ user_id: user.id, character_id: c.id })))
