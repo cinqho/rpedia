@@ -39,18 +39,9 @@ const labelStyle = {
 function AddCharacter() {
   const location = useLocation()
   const [form, setForm] = useState({
-    rp_name: '',
-    surname: '',
-    universe: '',
-    server: '',
-    player: '',
-    description: '',
-    legacy: '',
-    image_url: '',
-    stat_rp: 'C',
-    stat_pvp: 'C',
-    stat_lor: 'C',
-    stat_imp: 'C',
+    rp_name: '', surname: '', universe: '', server: '',
+    player: '', description: '', legacy: '', image_url: '',
+    stat_rp: 'C', stat_pvp: 'C', stat_lor: 'C', stat_imp: 'C',
   })
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -58,6 +49,8 @@ function AddCharacter() {
   const [accepted, setAccepted] = useState(false)
   const [user, setUser] = useState(null)
   const [pendingCount, setPendingCount] = useState(0)
+  const [servers, setServers] = useState([])
+  const [customServer, setCustomServer] = useState(false)
 
   useEffect(() => {
     setSuccess(false)
@@ -67,10 +60,20 @@ function AddCharacter() {
       setUser(u)
       if (u) fetchPendingCount(u.id)
     })
+    fetchServers()
   }, [location.key])
 
+  async function fetchServers() {
+    const { data } = await supabase
+      .from('characters')
+      .select('server')
+      .eq('status', 'approved')
+    const unique = [...new Set((data || []).map(c => c.server?.trim()).filter(Boolean))].sort()
+    setServers(unique)
+  }
+
   async function fetchPendingCount(userId) {
-    const { count, error } = await supabase
+    const { count } = await supabase
       .from('characters')
       .select('*', { count: 'exact', head: true })
       .eq('author_id', userId)
@@ -82,10 +85,21 @@ function AddCharacter() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
+  function handleServerSelect(e) {
+    const val = e.target.value
+    if (val === '__custom__') {
+      setCustomServer(true)
+      setForm({ ...form, server: '' })
+    } else {
+      setCustomServer(false)
+      setForm({ ...form, server: val })
+    }
+  }
+
   async function handleSubmit() {
     if (!user) return setError("Tu dois être connecté avec Discord pour proposer un personnage.")
     if (!accepted) return setError("Tu dois accepter la modération.")
-    if (!form.rp_name || !form.universe || !form.server) return setError("Nom RP, univers et serveur sont obligatoires.")
+    if (!form.rp_name || !form.universe || !form.server.trim()) return setError("Nom RP, univers et serveur sont obligatoires.")
     if (pendingCount >= 5) return setError("Tu as déjà 5 suggestions en attente. Attends qu'elles soient traitées.")
 
     setLoading(true)
@@ -93,21 +107,20 @@ function AddCharacter() {
 
     const { error } = await supabase
       .from('characters')
-      .insert([{ ...form, status: 'pending', author_id: user.id }])
+      .insert([{ ...form, server: form.server.trim(), status: 'pending', author_id: user.id }])
 
     if (error) setError(error.message)
     else {
       await fetchPendingCount(user.id)
       setSuccess(true)
     }
-
     setLoading(false)
   }
 
   if (!user) {
     return (
       <div className="relative w-full h-full flex items-center justify-center">
-        <LeftShape /><RightShape />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none"><LeftShape /><RightShape /></div>
         <div className="text-center relative z-10">
           <h2 className="text-4xl mb-4" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#fbc059' }}>Connexion requise</h2>
           <p className="font-mono text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>Connecte-toi avec Discord via la sidebar pour proposer un personnage.</p>
@@ -119,7 +132,7 @@ function AddCharacter() {
   if (success) {
     return (
       <div className="relative w-full h-full flex items-center justify-center">
-        <LeftShape /><RightShape />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none"><LeftShape /><RightShape /></div>
         <div className="text-center relative z-10">
           <h2 className="text-4xl mb-4" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#fbc059' }}>Proposition envoyée !</h2>
           <p className="font-mono text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
@@ -132,9 +145,7 @@ function AddCharacter() {
 
   return (
     <div className="relative w-full h-full">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <LeftShape /><RightShape />
-      </div>
+      <div className="absolute inset-0 overflow-hidden pointer-events-none"><LeftShape /><RightShape /></div>
       <div className="relative z-10 p-8 max-w-2xl mx-auto">
 
         <div className="mb-8 flex items-start justify-between">
@@ -187,9 +198,28 @@ function AddCharacter() {
               </select>
             </div>
 
+            {/* Serveur */}
             <div>
               <label style={labelStyle}>Serveur *</label>
-              <input name="server" value={form.server} onChange={handleChange} placeholder="ex: Konoha-RP" style={inputStyle} />
+              <select
+                value={customServer ? '__custom__' : form.server}
+                onChange={handleServerSelect}
+                style={inputStyle}
+              >
+                <option value="" style={{ background: '#0a0a0a' }}>Choisir un serveur</option>
+                {servers.map(s => <option key={s} value={s} style={{ background: '#0a0a0a' }}>{s}</option>)}
+                <option value="__custom__" style={{ background: '#0a0a0a' }}>✏️ Autre serveur...</option>
+              </select>
+              {customServer && (
+                <input
+                  name="server"
+                  value={form.server}
+                  onChange={handleChange}
+                  placeholder="Nom du serveur"
+                  style={{ ...inputStyle, marginTop: '8px' }}
+                  autoFocus
+                />
+              )}
             </div>
 
             <div>
