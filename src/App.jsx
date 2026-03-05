@@ -9,6 +9,7 @@ import Ranking from './pages/Ranking.jsx'
 import Pack from './pages/Pack.jsx'
 import Deck from './pages/Deck.jsx'
 import Admin from './pages/Admin.jsx'
+import Owner from './pages/Owner.jsx'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="/pack" element={<PageWrapper><Pack /></PageWrapper>} />
           <Route path="/deck" element={<PageWrapper><Deck /></PageWrapper>} />
           <Route path="/admin" element={<PageWrapper><Admin /></PageWrapper>} />
+          <Route path="/owner" element={<PageWrapper><Owner /></PageWrapper>} />
         </Routes>
       </div>
     </BrowserRouter>
