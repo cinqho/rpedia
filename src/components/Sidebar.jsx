@@ -18,7 +18,7 @@ const links = [
   { path: '/add-character', label: 'Suggérer', icon: PlusCircle },
   { path: '/ranking', label: 'Classements', icon: Trophy },
   { path: '/pack', label: 'Pack', icon: Package },
-  { path: '/deck', label: 'Mon Deck', icon: LayoutGrid },
+  { path: '/deck', label: 'Casier', icon: LayoutGrid },
   { path: '/about', label: 'About', icon: Info },
 ]
 
