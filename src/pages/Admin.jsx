@@ -6,8 +6,7 @@ const universes = ['Naruto', 'One Piece', 'Bleach', 'Dragon Ball', 'Autre']
 const statusOptions = ['pending', 'approved', 'rejected']
 const rarityOptions = [
   'NORMAL', 'VETERAN', 'ELITE', 'EPIQUE', 'LEGEND',
-  'COUP DE COEUR', 'RPEDIA VALIDATION', 'SHINY', 'SECRET', 'SUPREME',
-  'ABYSSAL', 'DIVIN', 'COSMIQUE', 'NECROSIS'
+  'COUP DE COEUR', 'RPEDIA VALIDATION', 'SHINY', 'SECRET', 'NECROSIS', 'COSMIQUE', 'DIVIN', 'ABYSSAL','SUPREME'
 ]
 
 const rarityColors = {
