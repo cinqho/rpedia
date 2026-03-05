@@ -1,8 +1,16 @@
 import { NavLink } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Home, Users, PlusCircle, Trophy, Info, Package, LayoutGrid, Menu, X } from 'lucide-react'
+import { Home, Users, PlusCircle, Trophy, Info, Package, LayoutGrid, Menu, X, Shield, Crown } from 'lucide-react'
 import AuthButton from './AuthButton'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from '../supabase'
+
+const OWNER_ID = '723c19f4-54ec-4ff2-951e-ae98765a6b9d'
+const ADMIN_IDS = [
+  '723c19f4-54ec-4ff2-951e-ae98765a6b9d',
+  'ceb2099b-a1f8-4ce2-8de4-6cefe8e5c5ce',
+  'd1a00da4-5f6e-4536-8f35-ee6c0a3650ea',
+]
 
 const links = [
   { path: '/', label: 'Accueil', icon: Home },
@@ -20,7 +28,9 @@ const sidebarStyle = {
   borderRadius: '16px',
 }
 
-function SidebarContent({ onClose }) {
+function SidebarContent({ onClose, userId }) {
+  const isAdmin = ADMIN_IDS.includes(userId)
+  const isOwner = userId === OWNER_ID
   return (
     <>
       {/* Ligne décorative */}
@@ -83,7 +93,45 @@ function SidebarContent({ onClose }) {
             </motion.div>
           )
         })}
+
+
       </nav>
+
+      {/* Boutons Admin / Owner */}
+      {(isAdmin || isOwner) && (
+        <div className="mx-4 mb-3 flex flex-col gap-1" style={{ position: 'relative', zIndex: 10 }}>
+          {isAdmin && (
+            <NavLink
+              to="/admin"
+              onClick={onClose}
+              className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 font-mono text-sm tracking-wide ${isActive ? '' : 'hover:bg-white/5'}`}
+              style={({ isActive }) => ({
+                color: isActive ? '#38BDF8' : 'rgba(56,189,248,0.6)',
+                background: isActive ? 'rgba(56,189,248,0.08)' : 'transparent',
+                borderLeft: isActive ? '2px solid #38BDF8' : '2px solid transparent',
+              })}
+            >
+              <Shield size={16} style={{ color: '#38BDF8', flexShrink: 0 }} />
+              Admin
+            </NavLink>
+          )}
+          {isOwner && (
+            <NavLink
+              to="/owner"
+              onClick={onClose}
+              className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 font-mono text-sm tracking-wide ${isActive ? '' : 'hover:bg-white/5'}`}
+              style={({ isActive }) => ({
+                color: isActive ? '#ff4ecd' : 'rgba(255,78,205,0.6)',
+                background: isActive ? 'rgba(255,78,205,0.08)' : 'transparent',
+                borderLeft: isActive ? '2px solid #ff4ecd' : '2px solid transparent',
+              })}
+            >
+              <Crown size={16} style={{ color: '#ff4ecd', flexShrink: 0 }} />
+              Owner
+            </NavLink>
+          )}
+        </div>
+      )}
 
       <div className="mx-4 mb-3 p-3 rounded-xl" style={{ background: 'rgba(251,192,89,0.05)', border: '1px solid rgba(251,192,89,0.15)', position: 'relative', zIndex: 10 }}>
         <p className="font-mono text-xs mb-1 font-bold" style={{ color: '#fbc059' }}>DISCORD RPÉDIA</p>
@@ -91,7 +139,7 @@ function SidebarContent({ onClose }) {
           Débats, réclamations sur les cartes, suggestions et news.
         </p>
         <a
-          href="https://discord.gg/wSCJX3E68S"
+          href="LIEN_DISCORD_ICI"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 w-full py-1.5 rounded-lg font-mono text-xs font-bold tracking-wider transition-all duration-200 hover:opacity-90"
@@ -109,6 +157,17 @@ function SidebarContent({ onClose }) {
 
 function Sidebar() {
   const [open, setOpen] = useState(false)
+  const [userId, setUserId] = useState(null)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setUserId(data.session?.user?.id ?? null)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUserId(session?.user?.id ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   return (
     <>
@@ -129,7 +188,7 @@ function Sidebar() {
         className="hidden md:flex fixed left-0 top-0 h-screen w-56 flex-col z-50"
         style={{ ...sidebarStyle, margin: '16px 0px 16px 16px', height: 'calc(100vh - 32px)' }}
       >
-        <SidebarContent />
+        <SidebarContent userId={userId} />
       </motion.aside>
 
       {/* Overlay mobile */}
@@ -152,7 +211,7 @@ function Sidebar() {
               className="fixed left-0 top-0 h-full w-64 flex flex-col z-50 md:hidden"
               style={{ ...sidebarStyle, borderRadius: '0 16px 16px 0' }}
             >
-              <SidebarContent onClose={() => setOpen(false)} />
+              <SidebarContent onClose={() => setOpen(false)} userId={userId} />
             </motion.aside>
           </>
         )}
