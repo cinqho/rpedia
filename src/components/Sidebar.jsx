@@ -5,13 +5,6 @@ import AuthButton from './AuthButton'
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 
-const OWNER_ID = '723c19f4-54ec-4ff2-951e-ae98765a6b9d'
-const ADMIN_IDS = [
-  '723c19f4-54ec-4ff2-951e-ae98765a6b9d',
-  'ceb2099b-a1f8-4ce2-8de4-6cefe8e5c5ce',
-  'd1a00da4-5f6e-4536-8f35-ee6c0a3650ea',
-]
-
 const links = [
   { path: '/', label: 'Accueil', icon: Home },
   { path: '/characters', label: 'Personnages', icon: Users },
@@ -28,9 +21,7 @@ const sidebarStyle = {
   borderRadius: '16px',
 }
 
-function SidebarContent({ onClose, userId }) {
-  const isAdmin = ADMIN_IDS.includes(userId)
-  const isOwner = userId === OWNER_ID
+function SidebarContent({ onClose, isAdmin, isOwner }) {
   return (
     <>
       {/* Ligne décorative */}
@@ -54,7 +45,6 @@ function SidebarContent({ onClose, userId }) {
         <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', letterSpacing: '0.05em', fontSize: '2rem' }}>
           <span style={{ color: '#ffffff' }}>RP</span><span style={{ color: '#fbc059' }}>EDIA</span>
         </h1>
-        {/* Croix fermeture mobile */}
         {onClose && (
           <button onClick={onClose} className="ml-auto md:hidden" style={{ color: 'rgba(255,255,255,0.4)' }}>
             <X size={20} />
@@ -93,8 +83,6 @@ function SidebarContent({ onClose, userId }) {
             </motion.div>
           )
         })}
-
-
       </nav>
 
       {/* Boutons Admin / Owner */}
@@ -157,21 +145,32 @@ function SidebarContent({ onClose, userId }) {
 
 function Sidebar() {
   const [open, setOpen] = useState(false)
-  const [userId, setUserId] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [isOwner, setIsOwner] = useState(false)
+
+  async function checkRole(userId) {
+    if (!userId) { setIsAdmin(false); setIsOwner(false); return }
+    const { data } = await supabase
+      .from('admins')
+      .select('role')
+      .eq('user_id', userId)
+      .single()
+    setIsAdmin(!!data)
+    setIsOwner(data?.role === 'owner')
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      setUserId(data.session?.user?.id ?? null)
+      checkRole(data.session?.user?.id ?? null)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      setUserId(session?.user?.id ?? null)
+      checkRole(session?.user?.id ?? null)
     })
     return () => subscription.unsubscribe()
   }, [])
 
   return (
     <>
-      {/* Bouton hamburger — mobile seulement */}
       <button
         onClick={() => setOpen(true)}
         className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-xl"
@@ -188,7 +187,7 @@ function Sidebar() {
         className="hidden md:flex fixed left-0 top-0 h-screen w-56 flex-col z-50"
         style={{ ...sidebarStyle, margin: '16px 0px 16px 16px', height: 'calc(100vh - 32px)' }}
       >
-        <SidebarContent userId={userId} />
+        <SidebarContent isAdmin={isAdmin} isOwner={isOwner} />
       </motion.aside>
 
       {/* Overlay mobile */}
@@ -211,7 +210,7 @@ function Sidebar() {
               className="fixed left-0 top-0 h-full w-64 flex flex-col z-50 md:hidden"
               style={{ ...sidebarStyle, borderRadius: '0 16px 16px 0' }}
             >
-              <SidebarContent onClose={() => setOpen(false)} userId={userId} />
+              <SidebarContent onClose={() => setOpen(false)} isAdmin={isAdmin} isOwner={isOwner} />
             </motion.aside>
           </>
         )}
