@@ -4,8 +4,8 @@ import { LeftShape, RightShape } from '../components/FormShapes'
 function About() {
   const team = [
     { role: 'Dev / Technique', members: ['Cinqho'] },
-    { role: 'Rédaction', members: ['Azox_Den','Fromlex'] },
-    { role: 'Collaborateurs', members: ['WshRenoi'] },
+    { role: 'Rédaction', members: ['?'] },
+    { role: 'Équilibrage', members: ['NJ','Azox_Den','Fromlex'] },
   ]
 
   return (
