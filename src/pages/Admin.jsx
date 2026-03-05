@@ -1,12 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 
-const ADMIN_IDS = [
-  '723c19f4-54ec-4ff2-951e-ae98765a6b9d',
-  'ceb2099b-a1f8-4ce2-8de4-6cefe8e5c5ce',
-  'd1a00da4-5f6e-4536-8f35-ee6c0a3650ea',
-]
-
 const statOptions = ['S+', 'S', 'A', 'B', 'C', 'D']
 const universes = ['Naruto', 'One Piece', 'Bleach', 'Dragon Ball', 'Autre']
 const statusOptions = ['pending', 'approved', 'rejected']
@@ -167,7 +161,6 @@ function CharacterRow({ character, adminId, onSave }) {
             <Field label="Statut" name="status" value={form.status} onChange={handleChange} options={statusOptions} />
           </div>
 
-          {/* Rareté — changement direct avec log auto */}
           <div className="mb-3">
             <label style={labelStyle}>Rareté {savingRarity && <span style={{ color: 'rgba(255,255,255,0.3)', textTransform: 'none', letterSpacing: 0 }}>— enregistrement...</span>}</label>
             <select
@@ -211,6 +204,7 @@ function CharacterRow({ character, adminId, onSave }) {
 
 function Admin() {
   const [user, setUser] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [characters, setCharacters] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -219,14 +213,24 @@ function Admin() {
   const [servers, setServers] = useState([])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null)
+    supabase.auth.getSession().then(async ({ data }) => {
+      const u = data.session?.user ?? null
+      setUser(u)
+      if (u) {
+        const { data: adminData } = await supabase
+          .from('admins')
+          .select('role')
+          .eq('user_id', u.id)
+          .single()
+        setIsAdmin(!!adminData)
+      }
+      setLoading(false)
     })
   }, [])
 
   useEffect(() => {
-    if (user && ADMIN_IDS.includes(user.id)) fetchCharacters()
-  }, [user])
+    if (user && isAdmin) fetchCharacters()
+  }, [user, isAdmin])
 
   async function fetchCharacters() {
     setLoading(true)
@@ -250,7 +254,7 @@ function Admin() {
     </div>
   )
 
-  if (!ADMIN_IDS.includes(user.id)) return (
+  if (!isAdmin) return (
     <div className="flex items-center justify-center h-full">
       <div className="text-center">
         <p className="font-mono text-4xl mb-2" style={{ color: '#FF2D55' }}>Accès refusé</p>
