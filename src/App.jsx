@@ -8,6 +8,7 @@ import Characters from './pages/Characters.jsx'
 import Ranking from './pages/Ranking.jsx'
 import Pack from './pages/Pack.jsx'
 import Deck from './pages/Deck.jsx'
+import Admin from './pages/Admin.jsx'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/ranking" element={<PageWrapper><Ranking /></PageWrapper>} />
           <Route path="/pack" element={<PageWrapper><Pack /></PageWrapper>} />
           <Route path="/deck" element={<PageWrapper><Deck /></PageWrapper>} />
+          <Route path="/admin" element={<PageWrapper><Admin /></PageWrapper>} />
         </Routes>
       </div>
     </BrowserRouter>
