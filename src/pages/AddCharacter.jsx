@@ -5,13 +5,23 @@ import { useLocation } from 'react-router-dom'
 
 const universes = ['Naruto', 'One Piece', 'Bleach', 'Dragon Ball', 'Autre']
 
+// Mise à jour des options avec les variantes + et -
 const statOptions = [
   { value: 'S+', label: 'S+ — Divin' },
-  { value: 'S', label: 'S — Légendaire' },
-  { value: 'A', label: 'A — Excellent' },
-  { value: 'B', label: 'B — Solide' },
-  { value: 'C', label: 'C — Moyen' },
-  { value: 'D', label: 'D — Faible' },
+  { value: 'S',  label: 'S — Légendaire' },
+  { value: 'S-', label: 'S- — Mythique' },
+  { value: 'A+', label: 'A+ — Maître' },
+  { value: 'A',  label: 'A — Excellent' },
+  { value: 'A-', label: 'A- — Très bon' },
+  { value: 'B+', label: 'B+ — Compétent' },
+  { value: 'B',  label: 'B — Solide' },
+  { value: 'B-', label: 'B- — Correct' },
+  { value: 'C+', label: 'C+ — Moyen +' },
+  { value: 'C',  label: 'C — Moyen' },
+  { value: 'C-', label: 'C- — Moyen -' },
+  { value: 'D+', label: 'D+ — Limite' },
+  { value: 'D',  label: 'D — Faible' },
+  { value: 'D-', label: 'D- — Inexistant' },
 ]
 
 const inputStyle = {
