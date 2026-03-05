@@ -68,7 +68,6 @@ function ParticleCanvas({ color, count = 18, rarityKey }) {
     function draw() {
       ctx.clearRect(0, 0, W, H)
 
-      // Glitch scanlines pour SECRET
       if (isSecret) {
         for (let i = 0; i < H; i += 4) {
           if (Math.random() > 0.97) {
@@ -78,7 +77,6 @@ function ParticleCanvas({ color, count = 18, rarityKey }) {
         }
       }
 
-      // Shimmer sweep pour SHINY
       if (isShiny) {
         const grad = ctx.createLinearGradient(0, 0, W, H)
         const t = (Date.now() % 2000) / 2000
@@ -105,7 +103,6 @@ function ParticleCanvas({ color, count = 18, rarityKey }) {
           ctx.fillStyle = color + Math.floor(p.alpha * 255).toString(16).padStart(2, '0')
         }
 
-        // Forme : étoile pour LEGEND/RPEDIA, losange pour SHINY, cercle sinon
         if (rarityKey === 'LEGEND' || rarityKey === 'RPEDIA VALIDATION') {
           drawStar(ctx, p.x, p.y, 4, p.r * 2, p.r)
         } else if (isShiny) {
@@ -146,7 +143,6 @@ function drawStar(ctx, cx, cy, spikes, outerR, innerR) {
   ctx.closePath()
 }
 
-// ─── Holo border pour RPEDIA VALIDATION ──────────────────────────────────────
 function HoloBorder() {
   return (
     <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{ zIndex: 5 }}>
@@ -170,7 +166,6 @@ function HoloBorder() {
   )
 }
 
-// ─── Pulsing glow pour LEGEND ─────────────────────────────────────────────────
 function PulseGlow({ color }) {
   return (
     <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{ zIndex: 3 }}>
@@ -185,7 +180,6 @@ function PulseGlow({ color }) {
   )
 }
 
-// ─── Shimmer border pour ELITE ────────────────────────────────────────────────
 function ShimmerBorder({ color }) {
   return (
     <div className="absolute inset-0 rounded-2xl pointer-events-none overflow-hidden" style={{ zIndex: 3 }}>
@@ -200,7 +194,6 @@ function ShimmerBorder({ color }) {
   )
 }
 
-// ─── Animated border pour VETERAN ────────────────────────────────────────────
 function VeteranBorder({ color }) {
   return (
     <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{ zIndex: 3 }}>
@@ -214,7 +207,6 @@ function VeteranBorder({ color }) {
   )
 }
 
-// ─── Pattern overlays ─────────────────────────────────────────────────────────
 function PatternOverlay({ type, color }) {
   if (!type) return null
   const id = `${type}-${color.replace('#','')}`
@@ -298,7 +290,6 @@ function CharacterCard({ character, onClick }) {
           {/* Image plein fond */}
           <div className="absolute inset-0" style={{ zIndex: 0 }}>
             <img src={imgSrc} alt={character.rp_name} className="w-full h-full object-cover object-top" />
-            {/* Gradient overlay pour lisibilité */}
             <div className="absolute inset-0" style={{
               background: rarityKey === 'SECRET'
                 ? 'linear-gradient(to top, rgba(5,0,5,0.95) 0%, rgba(5,0,5,0.5) 50%, rgba(5,0,5,0.1) 100%)'
@@ -306,29 +297,26 @@ function CharacterCard({ character, onClick }) {
             }} />
           </div>
 
-          {/* Barre haut */}
           <div style={{ height: 4, background: `linear-gradient(to right, transparent, ${color}, transparent)`, flexShrink: 0, zIndex: 6 }} />
 
-          {/* Badge rareté */}
           <div className="relative flex justify-between items-center px-3 pt-2 pb-1" style={{ zIndex: 6 }}>
             <span className="font-mono font-bold tracking-widest whitespace-nowrap" style={{ color, fontSize: '0.55rem' }}>{rarity.label}</span>
             {character.player && <span className="font-mono" style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.55rem' }}>{character.player}</span>}
           </div>
 
-          {/* Spacer pour pousser le contenu en bas */}
-          <div className="flex-1" style={{ zIndex: 0 }} />
+          {/* Spacer flexible mais avec min-height 0 pour ne jamais écraser le bas */}
+          <div style={{ flex: '1 1 0', minHeight: 0, zIndex: 0 }} />
 
-          {/* Contenu bas */}
-          <div className="relative px-3 pb-1 pt-2 text-center" style={{ zIndex: 6 }}>
+          <div className="relative px-3 pb-1 pt-2 text-center" style={{ zIndex: 6, flexShrink: 0 }}>
             <h2 className="font-bold tracking-widest uppercase leading-tight" style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.2rem', color: '#ffffff', textShadow: `0 0 20px ${color}` }}>
               {character.rp_name}
             </h2>
             {character.surname && <p className="font-mono" style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.6rem' }}>{character.surname}</p>}
           </div>
 
-          <div className="mx-3 relative" style={{ height: 1, background: `linear-gradient(to right, transparent, ${color}80, transparent)`, zIndex: 6 }} />
+          <div className="mx-3 relative" style={{ height: 1, background: `linear-gradient(to right, transparent, ${color}80, transparent)`, zIndex: 6, flexShrink: 0 }} />
 
-          <div className="relative grid grid-cols-4 gap-1 px-3 py-2" style={{ zIndex: 6 }}>
+          <div className="relative grid grid-cols-4 gap-1 px-3 py-2" style={{ zIndex: 6, flexShrink: 0 }}>
             {stats.map(stat => (
               <div key={stat.label} className="flex flex-col items-center">
                 <span className="font-bold leading-none" style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.1rem', color: rankColors[stat.value] || '#9CA3AF', textShadow: `0 0 8px ${rankColors[stat.value]}88` }}>{stat.value}</span>
@@ -337,7 +325,7 @@ function CharacterCard({ character, onClick }) {
             ))}
           </div>
 
-          <div className="relative px-3 pb-2 flex items-center justify-between" style={{ zIndex: 6 }}>
+          <div className="relative px-3 pb-2 flex items-center justify-between" style={{ zIndex: 6, flexShrink: 0 }}>
             <span className="font-mono" style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.55rem' }}>{character.server}</span>
             <span className="font-mono" style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.55rem' }}>♥ {character.likes_count ?? 0}</span>
           </div>
@@ -349,24 +337,28 @@ function CharacterCard({ character, onClick }) {
         <>
           <div style={{ height: 4, background: `linear-gradient(to right, transparent, ${color}, transparent)`, flexShrink: 0, zIndex: 3 }} />
 
-          <div className="relative z-10 flex items-center justify-between px-3 pt-2 pb-1">
+          {/* Rareté + joueur */}
+          <div className="relative z-10 flex items-center justify-between px-3 pt-2 pb-1" style={{ flexShrink: 0 }}>
             <span className="font-mono font-bold tracking-widest whitespace-nowrap" style={{ color, fontSize: '0.55rem' }}>{rarity.label}</span>
             {character.player && <span className="font-mono" style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.55rem' }}>{character.player}</span>}
           </div>
 
-          <div className="relative z-3 flex-1 overflow-hidden mx-2 rounded-xl" style={{ minHeight: 160 }}>
+          {/* Image — flexible mais avec min/max pour mobile */}
+          <div className="relative mx-2 rounded-xl overflow-hidden" style={{ flex: '1 1 0', minHeight: 0, maxHeight: '58%', zIndex: 3 }}>
             <img src={imgSrc} alt={character.rp_name} className="w-full h-full object-cover object-top" style={!character.image_url ? { filter: 'brightness(0.4)' } : {}} />
             <div className="absolute bottom-0 left-0 right-0 h-12" style={{ background: `linear-gradient(to top, ${bg}, transparent)` }} />
           </div>
 
-          <div className="relative z-10 px-3 pt-2 pb-1 text-center">
+          {/* Nom */}
+          <div className="relative z-10 px-3 pt-2 pb-1 text-center" style={{ flexShrink: 0 }}>
             <h2 className="font-bold tracking-widest uppercase leading-tight" style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.1rem', color: '#ffffff' }}>{character.rp_name}</h2>
             {character.surname && <p className="text-xs font-mono" style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.6rem' }}>{character.surname}</p>}
           </div>
 
-          <div className="mx-3 relative z-10" style={{ height: 1, background: `linear-gradient(to right, transparent, ${color}80, transparent)` }} />
+          <div className="mx-3 relative z-10" style={{ height: 1, background: `linear-gradient(to right, transparent, ${color}80, transparent)`, flexShrink: 0 }} />
 
-          <div className="relative z-10 grid grid-cols-4 gap-1 px-3 py-2">
+          {/* Stats */}
+          <div className="relative z-10 grid grid-cols-4 gap-1 px-3 py-2" style={{ flexShrink: 0 }}>
             {stats.map(stat => (
               <div key={stat.label} className="flex flex-col items-center">
                 <span className="font-bold leading-none" style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.1rem', color: rankColors[stat.value] || '#9CA3AF' }}>{stat.value}</span>
@@ -375,12 +367,14 @@ function CharacterCard({ character, onClick }) {
             ))}
           </div>
 
-          <div className="relative z-10 px-3 pb-2 flex items-center justify-between">
+          {/* Serveur + likes */}
+          <div className="relative z-10 px-3 pt-1 pb-1 flex items-center justify-between" style={{ flexShrink: 0 }}>
             <span className="font-mono" style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.55rem' }}>{character.server}</span>
             <span className="font-mono" style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.55rem' }}>♥ {character.likes_count ?? 0}</span>
           </div>
 
-          <div style={{ height: 4, background: `linear-gradient(to right, transparent, ${color}, transparent)`, flexShrink: 0, zIndex: 3 }} />
+          <div style={{ height: 4, background: `linear-gradient(to right, transparent, ${color}, transparent)`, flexShrink: 0, zIndex: 3, marginTop: 'auto' }} />
+
         </>
       )}
     </div>

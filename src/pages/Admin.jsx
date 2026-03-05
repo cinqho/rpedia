@@ -10,6 +10,16 @@ const ADMIN_IDS = [
 const statOptions = ['S+', 'S', 'A', 'B', 'C', 'D']
 const universes = ['Naruto', 'One Piece', 'Bleach', 'Dragon Ball', 'Autre']
 const statusOptions = ['pending', 'approved', 'rejected']
+const rarityOptions = [
+  'NORMAL', 'VETERAN', 'ELITE', 'EPIQUE', 'LEGEND',
+  'COUP DE COEUR', 'RPEDIA VALIDATION', 'SHINY', 'SECRET'
+]
+
+const rarityColors = {
+  NORMAL: '#9CA3AF', VETERAN: '#34D399', ELITE: '#38BDF8',
+  EPIQUE: '#A855F7', LEGEND: '#fbc059', 'COUP DE COEUR': '#F472B6',
+  'RPEDIA VALIDATION': '#fbc059', SHINY: '#67E8F9', SECRET: '#F472B6',
+}
 
 const inputStyle = {
   background: 'rgba(255,255,255,0.04)',
@@ -56,14 +66,35 @@ function Field({ label, name, value, onChange, type = 'text', options }) {
   )
 }
 
-function CharacterRow({ character, onSave }) {
+function CharacterRow({ character, adminId, onSave }) {
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(character)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [savingRarity, setSavingRarity] = useState(false)
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value })
+  }
+
+  async function handleRarityChange(newRarity) {
+    const oldRarity = form.rarity || 'NORMAL'
+    if (newRarity === oldRarity) return
+    setSavingRarity(true)
+
+    await supabase.from('characters').update({ rarity: newRarity }).eq('id', character.id)
+
+    await supabase.from('rarity_logs').insert({
+      character_id: character.id,
+      character_name: form.rp_name,
+      admin_id: adminId,
+      old_rarity: oldRarity,
+      new_rarity: newRarity,
+    })
+
+    setForm(f => ({ ...f, rarity: newRarity }))
+    onSave({ ...character, ...form, rarity: newRarity })
+    setSavingRarity(false)
   }
 
   async function handleSave() {
@@ -101,10 +132,11 @@ function CharacterRow({ character, onSave }) {
     rejected: '#FF2D55',
   }[form.status] || '#9CA3AF'
 
+  const rarityColor = rarityColors[form.rarity || 'NORMAL'] || '#9CA3AF'
+
   return (
     <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
 
-      {/* Header row */}
       <div
         className="flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-white/5 transition-all"
         onClick={() => setOpen(o => !o)}
@@ -123,7 +155,6 @@ function CharacterRow({ character, onSave }) {
         <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.7rem' }}>{open ? '▲' : '▼'}</span>
       </div>
 
-      {/* Edit panel */}
       {open && (
         <div className="px-4 pb-4 pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
@@ -134,6 +165,19 @@ function CharacterRow({ character, onSave }) {
             <Field label="Joueur" name="player" value={form.player} onChange={handleChange} />
             <Field label="URL Image" name="image_url" value={form.image_url} onChange={handleChange} />
             <Field label="Statut" name="status" value={form.status} onChange={handleChange} options={statusOptions} />
+          </div>
+
+          {/* Rareté — changement direct avec log auto */}
+          <div className="mb-3">
+            <label style={labelStyle}>Rareté {savingRarity && <span style={{ color: 'rgba(255,255,255,0.3)', textTransform: 'none', letterSpacing: 0 }}>— enregistrement...</span>}</label>
+            <select
+              value={form.rarity || 'NORMAL'}
+              onChange={e => handleRarityChange(e.target.value)}
+              disabled={savingRarity}
+              style={{ ...inputStyle, color: rarityColor, borderColor: `${rarityColor}44` }}
+            >
+              {rarityOptions.map(r => <option key={r} value={r} style={{ background: '#0a0a0a', color: '#fff' }}>{r}</option>)}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
@@ -231,8 +275,6 @@ function Admin() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-
-      {/* Header */}
       <div className="mb-6">
         <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '2.5rem', color: '#ffffff' }}>
           PANEL <span style={{ color: '#fbc059' }}>ADMIN</span>
@@ -242,7 +284,6 @@ function Admin() {
         </p>
       </div>
 
-      {/* Filtres */}
       <div className="flex flex-wrap gap-3 mb-4">
         <input
           value={search}
@@ -262,7 +303,6 @@ function Admin() {
         </select>
       </div>
 
-      {/* Liste */}
       {loading ? (
         <p className="font-mono text-xs text-center py-12" style={{ color: 'rgba(255,255,255,0.3)' }}>Chargement...</p>
       ) : filtered.length === 0 ? (
@@ -270,11 +310,10 @@ function Admin() {
       ) : (
         <div className="flex flex-col gap-2">
           {filtered.map(c => (
-            <CharacterRow key={c.id} character={c} onSave={handleSave} />
+            <CharacterRow key={c.id} character={c} adminId={user.id} onSave={handleSave} />
           ))}
         </div>
       )}
-
     </div>
   )
 }
