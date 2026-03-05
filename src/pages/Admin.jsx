@@ -14,14 +14,14 @@ const universes = ['Naruto', 'One Piece', 'Bleach', 'Dragon Ball', 'Autre']
 const statusOptions = ['pending', 'approved', 'rejected']
 const rarityOptions = [
   'NORMAL', 'VETERAN', 'ELITE', 'EPIQUE', 'LEGEND',
-  'COUP DE COEUR', 'RPEDIA VALIDATION', 'SHINY', 'SECRET', 'NECROSIS', 'ABYSSAL', 'COSMIQUE', 'DIVIN', 'SUPREME'
+  'COUP DE COEUR', 'RPEDIA VALIDATION', 'SHINY', 'SECRET', 'NECROSIS', 'ABYSSAL', 'COSMIQUE', 'ANCESTRAL', 'SUPREME'
 ]
 
 const rarityColors = {
   NORMAL: '#9CA3AF', VETERAN: '#34D399', ELITE: '#38BDF8',
   EPIQUE: '#A855F7', LEGEND: '#fbc059', 'COUP DE COEUR': '#F472B6',
   'RPEDIA VALIDATION': '#fbc059', SHINY: '#67E8F9', SECRET: '#F472B6',
-  SUPREME: '#FF1A1A', ABYSSAL: '#0EA5E9', DIVIN: '#FFF9C4',
+  SUPREME: '#FF1A1A', ABYSSAL: '#0EA5E9', ANCESTRAL: '#FFF9C4',
   COSMIQUE: '#C084FC', NECROSIS: '#4ADE80',
 }
 

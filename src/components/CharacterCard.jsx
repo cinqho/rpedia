@@ -12,15 +12,15 @@ export const rarities = {
   SECRET:             { label: '◈ SECRET',              color: '#F472B6', bg: '#050005', pattern: 'dots',      stars: 4, fullArt: true  },
   SUPREME:            { label: '👁 SUPRÊME',             color: '#FF1A1A', bg: '#070000', pattern: null,        stars: 0, fullArt: true  },
   ABYSSAL:            { label: '🌊 ABYSSAL',             color: '#0EA5E9', bg: '#000a14', pattern: null,        stars: 0, fullArt: true  },
-  DIVIN:              { label: '✦ DIVIN',                color: '#FFF9C4', bg: '#0a0800', pattern: null,        stars: 0, fullArt: true  },
+  ANCESTRAL:              { label: '✦ ANCESTRAL',                color: '#FFF9C4', bg: '#0a0800', pattern: null,        stars: 0, fullArt: true  },
   COSMIQUE:           { label: '🌌 COSMIQUE',            color: '#C084FC', bg: '#020008', pattern: null,        stars: 0, fullArt: true  },
   NECROSIS:           { label: '☠ NÉCROSIS',             color: '#4ADE80', bg: '#010800', pattern: null,        stars: 0, fullArt: true  },
 }
 
 export const RARITY_WEIGHTS = [
   { rarity: 'SUPREME',           weight: 0.05 },
-  { rarity: 'DIVIN',             weight: 0.06 },
-  { rarity: 'COSMIQUE',          weight: 0.07 },
+  { rarity: 'ANCESTRAL',             weight: 0.06 },
+    { rarity: 'COSMIQUE',          weight: 0.07 },
   { rarity: 'ABYSSAL',           weight: 0.08 },
   { rarity: 'NECROSIS',          weight: 0.09 },
   { rarity: 'SECRET',            weight: 0.1  },
@@ -45,11 +45,7 @@ export function rollRarity() {
 }
 
 const rankColors = {
-  'S+': '#ff4ecd', 'S': '#ff4ecd', 'S-': '#e044b0',
-  'A+': '#34D399', 'A': '#34D399', 'A-': '#22a876',
-  'B+': '#38BDF8', 'B': '#38BDF8', 'B-': '#1da8e8',
-  'C+': '#9CA3AF', 'C': '#9CA3AF', 'C-': '#7a8290',
-  'D+': '#6B7280', 'D': '#6B7280', 'D-': '#4f555e',
+  'S+': '#ff4ecd', S: '#fbc059', A: '#34D399', B: '#38BDF8', C: '#9CA3AF', D: '#6B7280',
 }
 
 const RUNES = ['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ','ᚺ','ᚾ','ᛁ','ᛃ','ᛇ','ᛈ','ᛉ','ᛊ','ᛏ','ᛒ','ᛖ','ᛗ','ᛚ','ᛜ','ᛞ','ᛟ']
@@ -461,9 +457,9 @@ function AbyssalEffects() {
   )
 }
 
-// ─── DIVIN effects ────────────────────────────────────────────────────────────
-const DIVIN_STYLES = `
-  @keyframes divinPulse {
+// ─── ANCESTRAL effects ────────────────────────────────────────────────────────────
+const ANCESTRAL_STYLES = `
+  @keyframes ancestralPulse {
     0%,100% { box-shadow: 0 0 25px #FFF9C4bb, 0 0 60px #FFF9C444; }
     50%     { box-shadow: 0 0 60px #FFFFFfff, 0 0 120px #FFF9C477, 0 0 200px #FFFFFF22; }
   }
@@ -485,7 +481,7 @@ const DIVIN_STYLES = `
     0%,100% { opacity: 0.3; }
     50%     { opacity: 0.7; }
   }
-  .divin-card     { animation: divinPulse 3s ease-in-out infinite; }
+  .ancestral-card     { animation: ancestralPulse 3s ease-in-out infinite; }
   .ray-rotate     { animation: rayRotate 20s linear infinite; transform-origin: center; }
   .feather-1 { animation: featherFall 5s ease-in infinite 0.0s; }
   .feather-2 { animation: featherFall 7s ease-in infinite 1.5s; }
@@ -495,10 +491,10 @@ const DIVIN_STYLES = `
   .gold-shimmer { animation: goldShimmer 3s ease-in-out infinite; }
 `
 
-function DivinEffects() {
+function AncestralEffects() {
   return (
     <>
-      <style>{DIVIN_STYLES}</style>
+      <style>{ANCESTRAL_STYLES}</style>
 
       {/* Rayons de lumière tournants */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 3 }}>
@@ -845,7 +841,7 @@ function ParticleCanvas({ color, count = 18, rarityKey }) {
     const isHolo    = rarityKey === 'RPEDIA VALIDATION'
     const isSupreme = rarityKey === 'SUPREME'
     const isAbyssal  = rarityKey === 'ABYSSAL'
-    const isDivin    = rarityKey === 'DIVIN'
+    const isAncestral    = rarityKey === 'ANCESTRAL'
     const isCosmique = rarityKey === 'COSMIQUE'
     const isNecrosis = rarityKey === 'NECROSIS'
 
@@ -1042,10 +1038,10 @@ function CharacterCard({ character, onClick }) {
   const rarityKey = character.rarity || 'NORMAL'
   const isSupreme = rarityKey === 'SUPREME'
   const isAbyssal  = rarityKey === 'ABYSSAL'
-  const isDivin    = rarityKey === 'DIVIN'
+  const isAncestral    = rarityKey === 'ANCESTRAL'
   const isCosmique = rarityKey === 'COSMIQUE'
   const isNecrosis = rarityKey === 'NECROSIS'
-  const isSpecial  = isSupreme || isAbyssal || isDivin || isCosmique || isNecrosis
+  const isSpecial  = isSupreme || isAbyssal || isAncestral || isCosmique || isNecrosis
 
   const hasParticles = ['EPIQUE','LEGEND','COUP DE COEUR','RPEDIA VALIDATION','SHINY','SECRET','SUPREME','ABYSSAL','COSMIQUE'].includes(rarityKey)
   const particleCount = { EPIQUE: 12, LEGEND: 20, 'COUP DE COEUR': 18, 'RPEDIA VALIDATION': 25, SHINY: 15, SECRET: 20, SUPREME: 25, ABYSSAL: 18, COSMIQUE: 30 }[rarityKey] || 0
@@ -1062,7 +1058,7 @@ function CharacterCard({ character, onClick }) {
   return (
     <div
       onClick={onClick}
-      className={`card-ratio relative flex flex-col rounded-2xl overflow-hidden cursor-pointer hover:scale-[1.03] transition-transform duration-200 ${isSupreme ? 'supreme-card' : isAbyssal ? 'abyssal-card' : isDivin ? 'divin-card' : isCosmique ? 'cosmic-card' : isNecrosis ? 'necrosis-card' : ''}`}
+      className={`card-ratio relative flex flex-col rounded-2xl overflow-hidden cursor-pointer hover:scale-[1.03] transition-transform duration-200 ${isSupreme ? 'supreme-card' : isAbyssal ? 'abyssal-card' : isAncestral ? 'ancestral-card' : isCosmique ? 'cosmic-card' : isNecrosis ? 'necrosis-card' : ''}`}
       style={{
         background: bg,
         border: `2px solid ${color}60`,
@@ -1079,7 +1075,7 @@ function CharacterCard({ character, onClick }) {
       {rarityKey === 'RPEDIA VALIDATION' && <HoloBorder />}
       {isSupreme && <SupremeEffects />}
       {isAbyssal && <AbyssalEffects />}
-      {isDivin && <DivinEffects />}
+      {isAncestral && <AncestralEffects />}
       {isCosmique && <CosmiqueEffects />}
       {isNecrosis && <NecrosisEffects />}
       {hasParticles && <ParticleCanvas color={color} count={particleCount} rarityKey={rarityKey} />}
@@ -1097,7 +1093,7 @@ function CharacterCard({ character, onClick }) {
                 ? 'linear-gradient(to top, rgba(7,0,0,0.98) 0%, rgba(7,0,0,0.7) 38%, rgba(7,0,0,0.2) 65%, transparent 100%)'
                 : isAbyssal
                 ? 'linear-gradient(to top, rgba(0,10,20,0.98) 0%, rgba(0,10,20,0.65) 40%, rgba(0,10,20,0.15) 70%, transparent 100%)'
-                : isDivin
+                : isAncestral
                 ? 'linear-gradient(to top, rgba(10,8,0,0.95) 0%, rgba(10,8,0,0.5) 45%, rgba(10,8,0,0.1) 70%, transparent 100%)'
                 : isCosmique
                 ? 'linear-gradient(to top, rgba(2,0,8,0.98) 0%, rgba(2,0,8,0.65) 40%, rgba(2,0,8,0.15) 70%, transparent 100%)'

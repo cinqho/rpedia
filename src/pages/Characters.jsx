@@ -8,7 +8,7 @@ const universes = ['Tous', 'Naruto', 'One Piece', 'Bleach', 'Dragon Ball', 'Autr
 const RARITY_ORDER = [
   'NORMAL', 'VETERAN', 'ELITE', 'EPIQUE', 'LEGEND',
   'COUP DE COEUR', 'RPEDIA VALIDATION', 'SHINY', 'SECRET',
-  'NECROSIS', 'ABYSSAL', 'COSMIQUE', 'DIVIN', 'SUPREME'
+  'NECROSIS', 'ABYSSAL', 'COSMIQUE', 'ANCESTRAL', 'SUPREME'
 ]
 
 function Characters() {
