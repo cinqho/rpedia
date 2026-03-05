@@ -265,13 +265,12 @@ function CharacterCard({ character, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="relative flex flex-col rounded-2xl overflow-hidden cursor-pointer hover:scale-[1.03] transition-transform duration-200"
+      className="card-ratio relative flex flex-col rounded-2xl overflow-hidden cursor-pointer hover:scale-[1.03] transition-transform duration-200"
       style={{
         background: bg,
         border: `2px solid ${color}60`,
         boxShadow: `0 0 ${fullArt ? 32 : 16}px ${color}${fullArt ? '44' : '20'}, inset 0 0 30px rgba(0,0,0,0.4)`,
         willChange: 'transform',
-        aspectRatio: '3/4',
       }}
     >
       {/* Effects */}

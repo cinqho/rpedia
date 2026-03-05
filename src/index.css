@@ -13,3 +13,13 @@ body {
 .animate-marquee-vertical {
   animation: marquee-vertical 20s linear infinite;
 }
+
+.card-ratio {
+  aspect-ratio: 3/4;
+}
+
+@media (max-width: 640px) {
+  .card-ratio {
+    aspect-ratio: 2/3;
+  }
+}
