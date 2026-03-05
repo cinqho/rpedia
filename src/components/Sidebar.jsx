@@ -139,7 +139,7 @@ function SidebarContent({ onClose, userId }) {
           Débats, réclamations sur les cartes, suggestions et news.
         </p>
         <a
-          href="LIEN_DISCORD_ICI"
+          href="https://discord.gg/AZ4yerMAaa"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 w-full py-1.5 rounded-lg font-mono text-xs font-bold tracking-wider transition-all duration-200 hover:opacity-90"
