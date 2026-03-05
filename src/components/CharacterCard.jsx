@@ -1,29 +1,27 @@
 import { useEffect, useRef } from 'react'
 
-// 1. Définition des raretés avec leurs styles visuels
 export const rarities = {
-  NORMAL:              { label: 'NORMAL',               color: '#9CA3AF', bg: '#1a1a2e', pattern: null,        stars: 0, fullArt: false },
-  VETERAN:             { label: '⚔ VÉTÉRAN',            color: '#34D399', bg: '#0a1a12', pattern: null,        stars: 1, fullArt: false },
-  ELITE:               { label: '◆ ÉLITE',               color: '#38BDF8', bg: '#0c1a2e', pattern: null,        stars: 2, fullArt: false },
-  EPIQUE:              { label: '✦ ÉPIQUE',              color: '#A855F7', bg: '#120a1a', pattern: 'dots',      stars: 3, fullArt: false },
-  LEGEND:              { label: '★ LÉGENDAIRE',          color: '#fbc059', bg: '#1a1200', pattern: 'triangles', stars: 5, fullArt: true  },
-  'COUP DE COEUR':     { label: '💛 COUP DE CŒUR',       color: '#F472B6', bg: '#1a0a14', pattern: 'diamonds',  stars: 4, fullArt: true  },
-  'RPEDIA VALIDATION': { label: '⚜️ RPÉDIA VALIDATION',  color: '#fbc059', bg: '#0a0a0a', pattern: 'triangles', stars: 6, fullArt: true  },
-  SHINY:               { label: '✦ SHINY',               color: '#67E8F9', bg: '#0c1a2e', pattern: 'diamonds',  stars: 3, fullArt: true  },
-  SECRET:              { label: '◈ SECRET',              color: '#F472B6', bg: '#050005', pattern: 'dots',      stars: 4, fullArt: true  },
-  SUPREME:             { label: '👁 SUPRÊME',             color: '#FF1A1A', bg: '#070000', pattern: null,        stars: 0, fullArt: true  },
-  ABYSSAL:             { label: '🌊 ABYSSAL',             color: '#0EA5E9', bg: '#000a14', pattern: null,        stars: 0, fullArt: true  },
-  DIVIN:               { label: '✦ DIVIN',                color: '#FFF9C4', bg: '#0a0800', pattern: null,        stars: 0, fullArt: true  },
-  COSMIQUE:            { label: '🌌 COSMIQUE',            color: '#C084FC', bg: '#020008', pattern: null,        stars: 0, fullArt: true  },
-  NECROSIS:            { label: '☠ NÉCROSIS',             color: '#4ADE80', bg: '#010800', pattern: null,        stars: 0, fullArt: true  },
+  NORMAL:             { label: 'NORMAL',               color: '#9CA3AF', bg: '#1a1a2e', pattern: null,        stars: 0, fullArt: false },
+  VETERAN:            { label: '⚔ VÉTÉRAN',            color: '#34D399', bg: '#0a1a12', pattern: null,        stars: 1, fullArt: false },
+  ELITE:              { label: '◆ ÉLITE',               color: '#38BDF8', bg: '#0c1a2e', pattern: null,        stars: 2, fullArt: false },
+  EPIQUE:             { label: '✦ ÉPIQUE',              color: '#A855F7', bg: '#120a1a', pattern: 'dots',      stars: 3, fullArt: false },
+  LEGEND:             { label: '★ LÉGENDAIRE',          color: '#fbc059', bg: '#1a1200', pattern: 'triangles', stars: 5, fullArt: true  },
+  'COUP DE COEUR':    { label: '💛 COUP DE CŒUR',       color: '#F472B6', bg: '#1a0a14', pattern: 'diamonds',  stars: 4, fullArt: true  },
+  'RPEDIA VALIDATION':{ label: '⚜️ RPÉDIA VALIDATION',  color: '#fbc059', bg: '#0a0a0a', pattern: 'triangles', stars: 6, fullArt: true  },
+  SHINY:              { label: '✦ SHINY',               color: '#67E8F9', bg: '#0c1a2e', pattern: 'diamonds',  stars: 3, fullArt: true  },
+  SECRET:             { label: '◈ SECRET',              color: '#F472B6', bg: '#050005', pattern: 'dots',      stars: 4, fullArt: true  },
+  SUPREME:            { label: '👁 SUPRÊME',             color: '#FF1A1A', bg: '#070000', pattern: null,        stars: 0, fullArt: true  },
+  ABYSSAL:            { label: '🌊 ABYSSAL',             color: '#0EA5E9', bg: '#000a14', pattern: null,        stars: 0, fullArt: true  },
+  DIVIN:              { label: '✦ DIVIN',                color: '#FFF9C4', bg: '#0a0800', pattern: null,        stars: 0, fullArt: true  },
+  COSMIQUE:           { label: '🌌 COSMIQUE',            color: '#C084FC', bg: '#020008', pattern: null,        stars: 0, fullArt: true  },
+  NECROSIS:           { label: '☠ NÉCROSIS',             color: '#4ADE80', bg: '#010800', pattern: null,        stars: 0, fullArt: true  },
 }
 
-// 2. Calcul des probabilités (Weights)
 export const RARITY_WEIGHTS = [
   { rarity: 'SUPREME',           weight: 0.05 },
+  { rarity: 'DIVIN',             weight: 0.06 },
+  { rarity: 'COSMIQUE',          weight: 0.07 },
   { rarity: 'ABYSSAL',           weight: 0.08 },
-  { rarity: 'DIVIN',             weight: 0.07 },
-  { rarity: 'COSMIQUE',          weight: 0.06 },
   { rarity: 'NECROSIS',          weight: 0.09 },
   { rarity: 'SECRET',            weight: 0.1  },
   { rarity: 'SHINY',             weight: 0.4  },
@@ -36,7 +34,6 @@ export const RARITY_WEIGHTS = [
   { rarity: 'NORMAL',            weight: 45   },
 ]
 
-// 3. Logique de tirage (Roll)
 export function rollRarity() {
   const total = RARITY_WEIGHTS.reduce((s, r) => s + r.weight, 0)
   let rand = Math.random() * total
@@ -47,16 +44,10 @@ export function rollRarity() {
   return 'NORMAL'
 }
 
-// 4. Couleurs des Rangs (incluant + et -)
-export const rankColors = {
-  'S+': '#ff4ecd', 'S': '#fbc059', 'S-': '#e2ab50',
-  'A+': '#4ade80', 'A': '#34D399', 'A-': '#2eb886',
-  'B+': '#60a5fa', 'B': '#38BDF8', 'B-': '#30a2d1',
-  'C+': '#a1a1aa', 'C': '#9CA3AF', 'C-': '#8a8f99',
-  'D+': '#7a808c', 'D': '#6B7280', 'D-': '#5a5f6b',
+const rankColors = {
+  'S+': '#ff4ecd', S: '#fbc059', A: '#34D399', B: '#38BDF8', C: '#9CA3AF', D: '#6B7280',
 }
 
-// 5. Runes pour les effets visuels
 const RUNES = ['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ','ᚺ','ᚾ','ᛁ','ᛃ','ᛇ','ᛈ','ᛉ','ᛊ','ᛏ','ᛒ','ᛖ','ᛗ','ᛚ','ᛜ','ᛞ','ᛟ']
 
 // ─── SUPREME CSS animations ───────────────────────────────────────────────────
