@@ -167,9 +167,11 @@ function Pack() {
       picked.push(chosen)
     }
 
-    const newCards = picked.filter(c => !ownedIds.includes(c.id))
-    if (newCards.length > 0) {
-      await supabase.from('deck').insert(newCards.map(c => ({ user_id: user.id, character_id: c.id })))
+    for (const card of picked) {
+      await supabase.from('deck').upsert(
+        { user_id: user.id, character_id: card.id },
+        { onConflict: 'user_id,character_id', ignoreDuplicates: true }
+      )
     }
     await supabase.from('resources').update({ packs_available: resources.packs_available - 1 }).eq('user_id', user.id)
 
