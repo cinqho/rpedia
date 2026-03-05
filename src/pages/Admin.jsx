@@ -1,7 +1,15 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 
-const statOptions = ['S+', 'S', 'A', 'B', 'C', 'D']
+// ICI : Mise à jour complète de la liste pour le menu déroulant
+const statOptions = [
+  'S+', 'S', 'S-', 
+  'A+', 'A', 'A-', 
+  'B+', 'B', 'B-', 
+  'C+', 'C', 'C-', 
+  'D+', 'D', 'D-'
+]
+
 const universes = ['Naruto', 'One Piece', 'Bleach', 'Dragon Ball', 'Autre']
 const statusOptions = ['pending', 'approved', 'rejected']
 const rarityOptions = [
