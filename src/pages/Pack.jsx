@@ -4,7 +4,9 @@ import CharacterCard, { rollRarity, rarities, RARITY_WEIGHTS } from '../componen
 
 function DropRates() {
   const [open, setOpen] = useState(false)
-  const total = RARITY_WEIGHTS.reduce((s, r) => s + r.weight, 0)
+  
+  // Calcul du total des poids pour obtenir les vrais pourcentages
+  const totalWeight = RARITY_WEIGHTS.reduce((sum, r) => sum + r.weight, 0)
 
   return (
     <div className="mt-6">
@@ -18,22 +20,34 @@ function DropRates() {
       </button>
 
       {open && (
-        <div className="mt-3 rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <div className="flex flex-col gap-2">
+        <div className="mt-3 rounded-xl p-4 max-h-80 overflow-y-auto" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex flex-col gap-3">
             {RARITY_WEIGHTS.map(({ rarity, weight }) => {
               const r = rarities[rarity]
-              const pct = (weight / total * 100).toFixed(1)
-              const barW = Math.max(2, (weight / total) * 100)
+              // Calcul du vrai pourcentage
+              const percentage = ((weight / totalWeight) * 100).toFixed(weight < 1 ? 2 : 1)
+              // Largeur de la barre proportionnelle au pourcentage (min 2% pour la visibilité)
+              const barWidth = Math.max(2, (weight / totalWeight) * 100)
+              
               return (
                 <div key={rarity} className="flex items-center gap-3">
-                  <span className="font-mono text-xs w-40 flex-shrink-0" style={{ color: r?.color || '#9CA3AF' }}>
+                  <span className="font-mono text-[10px] w-36 flex-shrink-0 truncate" style={{ color: r?.color || '#9CA3AF' }}>
                     {r?.label || rarity}
                   </span>
-                  <div className="flex-1 h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                    <div className="h-full rounded-full" style={{ width: `${barW}%`, background: r?.color || '#9CA3AF', opacity: 0.8 }} />
+                  
+                  <div className="flex-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    <div 
+                      className="h-full rounded-full transition-all duration-500" 
+                      style={{ 
+                        width: `${barWidth}%`, 
+                        background: r?.color || '#9CA3AF', 
+                        opacity: 0.7 
+                      }} 
+                    />
                   </div>
-                  <span className="font-mono text-xs w-10 text-right flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    {pct}%
+
+                  <span className="font-mono text-[10px] w-12 text-right flex-shrink-0" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                    {percentage}%
                   </span>
                 </div>
               )
@@ -129,35 +143,30 @@ function Pack() {
 
     if (!allChars || allChars.length < 1) {
       setLoading(false)
-      return alert("Pas assez de personnages disponibles pour ouvrir ce pack !")
+      return alert("Pas de personnages disponibles !")
     }
 
-    // Grouper TOUS les persos par rareté, doublons inclus
     const byRarity = {}
-    for (const c of allChars) {
+    allChars.forEach(c => {
       const r = c.rarity || 'NORMAL'
       if (!byRarity[r]) byRarity[r] = []
       byRarity[r].push(c)
-    }
+    })
 
     const picked = []
-
     for (let i = 0; i < 3; i++) {
       let chosen = null
       let attempts = 0
-      while (!chosen && attempts < 100) {
+      while (!chosen && attempts < 50) {
         attempts++
         const rolledRarity = rollRarity()
         const pool = byRarity[rolledRarity] || []
-        if (pool.length > 0) {
-          chosen = pool[Math.floor(Math.random() * pool.length)]
-        }
+        if (pool.length > 0) chosen = pool[Math.floor(Math.random() * pool.length)]
       }
       if (!chosen) chosen = allChars[Math.floor(Math.random() * allChars.length)]
       picked.push(chosen)
     }
 
-    // Insérer uniquement les cartes pas encore dans le deck
     const newCards = picked.filter(c => !ownedIds.includes(c.id))
     if (newCards.length > 0) {
       await supabase.from('deck').insert(newCards.map(c => ({ user_id: user.id, character_id: c.id })))
@@ -173,38 +182,26 @@ function Pack() {
       setTimeout(() => {
         setRevealedCards(prev => [...prev, i])
         if (i === picked.length - 1) setPhase('done')
-      }, i * 700)
+      }, i * 800)
     })
-
     setLoading(false)
   }
 
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <h2 className="text-4xl mb-4" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#fbc059' }}>Connexion requise</h2>
-          <p className="font-mono text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>Connecte-toi avec Discord pour ouvrir des packs.</p>
-        </div>
-      </div>
-    )
-  }
+  if (!user) return <div className="p-8 text-center text-white/40 font-mono text-sm">Connecte-toi pour ouvrir des packs.</div>
 
   return (
     <div className="p-8">
-
+      {/* Header */}
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '3rem', letterSpacing: '0.05em', color: '#ffffff' }}>
+          <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '3rem', color: '#ffffff' }}>
             PACKS <span style={{ color: '#fbc059' }}>DISPONIBLES</span>
           </h1>
-          <p className="font-mono text-xs tracking-widest mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>
-            Sélectionne un pack et ouvre-le pour obtenir 3 cartes.
-          </p>
+          <p className="font-mono text-xs text-white/30">Ouvre un pack pour obtenir 3 cartes.</p>
         </div>
-        <div className="text-right flex-shrink-0 ml-4">
-          <p className="font-mono text-xs mb-1" style={{ color: 'rgba(255,255,255,0.3)' }}>PACKS RESTANTS</p>
-          <p className="font-bold" style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '2.5rem', color: resources?.packs_available > 0 ? '#fbc059' : '#FF2D55', lineHeight: 1 }}>
+        <div className="text-right">
+          <p className="font-mono text-xs text-white/30">RESTANTS</p>
+          <p style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '2.5rem', color: resources?.packs_available > 0 ? '#fbc059' : '#FF2D55', lineHeight: 1 }}>
             {resources?.packs_available ?? 0}
           </p>
         </div>
@@ -212,74 +209,36 @@ function Pack() {
 
       {phase === 'idle' && (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mb-8">
             <Booster server="general" selected={selectedServer === 'general'} onClick={() => setSelectedServer('general')} disabled={resources?.packs_available <= 0} />
-            {servers.map(s => (
-              <Booster key={s} server={s} selected={selectedServer === s} onClick={() => setSelectedServer(s)} disabled={resources?.packs_available <= 0} />
-            ))}
+            {servers.map(s => <Booster key={s} server={s} selected={selectedServer === s} onClick={() => setSelectedServer(s)} disabled={resources?.packs_available <= 0} />)}
           </div>
 
-          {selectedServer && (
-            <div className="flex justify-center mt-4">
-              <button
-                onClick={openPack}
-                disabled={loading || !resources || resources.packs_available <= 0}
-                className="px-12 py-4 rounded-2xl font-mono font-bold tracking-widest uppercase text-sm transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ background: '#fbc059', color: '#0a0a0a' }}
-              >
-                {loading ? 'Ouverture...' : `Ouvrir le pack ${selectedServer === 'general' ? 'Général' : selectedServer}`}
+          <div className="flex flex-col items-center">
+            {selectedServer && (
+              <button onClick={openPack} className="px-12 py-4 rounded-2xl font-mono font-bold uppercase text-sm bg-[#fbc059] text-black">
+                {loading ? 'Ouverture...' : `Ouvrir pack ${selectedServer}`}
               </button>
-            </div>
-          )}
-
-          {!selectedServer && (
-            <p className="text-center font-mono text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Sélectionne un pack pour continuer</p>
-          )}
-
+            )}
+          </div>
           <DropRates />
         </>
       )}
 
       {(phase === 'opening' || phase === 'done') && (
-        <div className="flex flex-col items-center gap-8">
-          <p className="font-mono text-xs tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>
-            {phase === 'done' ? '✨ Cartes obtenues !' : 'Révélation en cours...'}
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-3xl">
+        <div className="flex flex-col items-center gap-8 py-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl">
             {cards.map((card, i) => (
-              <div key={card.id} style={{ opacity: revealedCards.includes(i) ? 1 : 0, transform: revealedCards.includes(i) ? 'translateY(0)' : 'translateY(16px)', transition: 'all 0.4s ease' }}>
-                {/* Badge rareté obtenue */}
-                {revealedCards.includes(i) && (
-                  <div className="text-center mb-2">
-                    <span className="font-mono text-xs tracking-widest px-3 py-1 rounded-full"
-                      style={{ background: `${rarities[card.rarity]?.color}18`, color: rarities[card.rarity]?.color, border: `1px solid ${rarities[card.rarity]?.color}44` }}>
-                      {rarities[card.rarity]?.label}
-                    </span>
-                  </div>
-                )}
+              <div key={i} style={{ opacity: revealedCards.includes(i) ? 1 : 0, transition: 'all 0.5s ease' }}>
                 <CharacterCard character={card} />
               </div>
             ))}
           </div>
-
           {phase === 'done' && (
-            <div className="flex gap-4 mt-4">
-              <button
-                onClick={() => { setPhase('idle'); setCards([]); setSelectedServer(null) }}
-                className="px-8 py-3 rounded-xl font-mono text-sm transition-all duration-200"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}
-              >
-                Ouvrir un autre pack
-              </button>
-              <a href="/deck" className="px-8 py-3 rounded-xl font-mono text-sm font-bold transition-all duration-200 hover:opacity-90" style={{ background: '#fbc059', color: '#0a0a0a' }}>
-                Voir mon deck →
-              </a>
-            </div>
+            <button onClick={() => { setPhase('idle'); setCards([]); setSelectedServer(null) }} className="px-8 py-3 rounded-xl font-mono text-xs border border-white/10 text-white/40">RETOUR</button>
           )}
         </div>
       )}
-
     </div>
   )
 }
