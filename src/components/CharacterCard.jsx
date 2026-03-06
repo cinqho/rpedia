@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export const rarities = {
   NORMAL:             { label: 'NORMAL',               color: '#9CA3AF', bg: '#1a1a2e', pattern: null,        stars: 0, fullArt: false },
@@ -19,9 +19,9 @@ export const rarities = {
 
 export const RARITY_WEIGHTS = [
   { rarity: 'SUPREME',           weight: 0.05 },
-  { rarity: 'ANCESTRAL',             weight: 0.06 },
-    { rarity: 'COSMIQUE',          weight: 0.07 },
   { rarity: 'ABYSSAL',           weight: 0.08 },
+  { rarity: 'ANCESTRAL',             weight: 0.07 },
+  { rarity: 'COSMIQUE',          weight: 0.06 },
   { rarity: 'NECROSIS',          weight: 0.09 },
   { rarity: 'SECRET',            weight: 0.1  },
   { rarity: 'SHINY',             weight: 0.4  },
@@ -203,7 +203,7 @@ function SupremeEffects() {
       </div>
 
       {/* Œil démoniaque */}
-      <div className="absolute pointer-events-none" style={{ top: '22%', left: '50%', transform: 'translateX(-50%)', zIndex: 15 }}>
+      <div className="absolute pointer-events-none" style={{ bottom: '32%', left: '50%', transform: 'translateX(-50%)', zIndex: 15 }}>
         {/* Iris */}
         <div className="eye-blink" style={{
           width: 44, height: 22,
@@ -1037,6 +1037,7 @@ function Stars({ count, color }) {
 
 // ─── Main card ────────────────────────────────────────────────────────────────
 function CharacterCard({ character, onClick }) {
+  const [hovered, setHovered] = useState(false)
   const rarity = rarities[character.rarity] || rarities.NORMAL
   const { color, bg, fullArt } = rarity
   const rarityKey = character.rarity || 'NORMAL'
@@ -1062,7 +1063,9 @@ function CharacterCard({ character, onClick }) {
   return (
     <div
       onClick={onClick}
-      className={`card-ratio relative flex flex-col rounded-2xl overflow-hidden cursor-pointer hover:scale-[1.03] transition-transform duration-200 ${isSupreme ? 'supreme-card' : isAbyssal ? 'abyssal-card' : isAncestral ? 'ancestral-card' : isCosmique ? 'cosmic-card' : isNecrosis ? 'necrosis-card' : ''}`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className={`card-ratio relative flex flex-col rounded-2xl overflow-hidden cursor-pointer hover:scale-[1.03] transition-transform duration-200 ${hovered && isSupreme ? 'supreme-card' : hovered && isAbyssal ? 'abyssal-card' : hovered && isAncestral ? 'ancestral-card' : hovered && isCosmique ? 'cosmic-card' : hovered && isNecrosis ? 'necrosis-card' : ''}`}
       style={{
         background: bg,
         border: `2px solid ${color}60`,
@@ -1073,16 +1076,16 @@ function CharacterCard({ character, onClick }) {
         aspectRatio: '3/4',
       }}
     >
-      {rarityKey === 'VETERAN' && <VeteranBorder color={color} />}
-      {rarityKey === 'ELITE' && <ShimmerBorder color={color} />}
-      {rarityKey === 'LEGEND' && <PulseGlow color={color} />}
-      {rarityKey === 'RPEDIA VALIDATION' && <HoloBorder />}
-      {isSupreme && <SupremeEffects />}
-      {isAbyssal && <AbyssalEffects />}
-      {isAncestral && <AncestralEffects />}
-      {isCosmique && <CosmiqueEffects />}
-      {isNecrosis && <NecrosisEffects />}
-      {hasParticles && <ParticleCanvas color={color} count={particleCount} rarityKey={rarityKey} />}
+      {rarityKey === 'VETERAN' && hovered && <VeteranBorder color={color} />}
+      {rarityKey === 'ELITE' && hovered && <ShimmerBorder color={color} />}
+      {rarityKey === 'LEGEND' && hovered && <PulseGlow color={color} />}
+      {rarityKey === 'RPEDIA VALIDATION' && hovered && <HoloBorder />}
+      {isSupreme && hovered && <SupremeEffects />}
+      {isAbyssal && hovered && <AbyssalEffects />}
+      {isAncestral && hovered && <AncestralEffects />}
+      {isCosmique && hovered && <CosmiqueEffects />}
+      {isNecrosis && hovered && <NecrosisEffects />}
+      {hasParticles && hovered && <ParticleCanvas color={color} count={particleCount} rarityKey={rarityKey} />}
 
       <PatternOverlay type={rarity.pattern} color={color} />
       <Stars count={rarity.stars} color={color} />
@@ -1091,7 +1094,7 @@ function CharacterCard({ character, onClick }) {
       {fullArt ? (
         <>
           <div className="absolute inset-0" style={{ zIndex: 0 }}>
-            <img src={imgSrc} alt={character.rp_name} className="w-full h-full object-cover object-top" />
+            <img src={imgSrc} alt={character.rp_name} loading="lazy" className="w-full h-full object-cover object-top" />
             <div className="absolute inset-0" style={{
               background: isSupreme
                 ? 'linear-gradient(to top, rgba(7,0,0,0.98) 0%, rgba(7,0,0,0.7) 38%, rgba(7,0,0,0.2) 65%, transparent 100%)'
@@ -1185,7 +1188,7 @@ function CharacterCard({ character, onClick }) {
           </div>
 
           <div className="relative mx-2 rounded-xl overflow-hidden" style={{ flex: '1 1 0', minHeight: 0, maxHeight: '58%', zIndex: 3 }}>
-            <img src={imgSrc} alt={character.rp_name} className="w-full h-full object-cover object-top" style={!character.image_url ? { filter: 'brightness(0.4)' } : {}} />
+            <img src={imgSrc} alt={character.rp_name} loading="lazy" className="w-full h-full object-cover object-top" style={!character.image_url ? { filter: 'brightness(0.4)' } : {}} />
             <div className="absolute bottom-0 left-0 right-0 h-12" style={{ background: `linear-gradient(to top, ${bg}, transparent)` }} />
           </div>
 
