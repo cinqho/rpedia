@@ -1,37 +1,36 @@
 import { useEffect, useRef, useState } from 'react'
 
+// ─── RARETÉS ─────────────────────────────────────────────────────────────────
+// ICONE      0.05%  → effets Supreme (rouge, flammes, œil)
+// ANCESTRAL  0.07%  → effets Ancestral (doré, ailes, plumes)
+// LEGENDAIRE 3.83%  → effets Cosmique teinte or/bleu foncé
+// SECRET     1%     → effets RPédia Validation (holo), CACHÉ dans characters
+// EPIQUE    10.05%  → effets Necrosis violet (remplace vert par violet)
+// ELITE     15%     → ShimmerBorder
+// VETERAN   25%     → VeteranBorder
+// NORMAL    45%     → rien
+// Toutes les autres raretés → traitées comme NORMAL en attendant
+
 export const rarities = {
-  NORMAL:             { label: 'NORMAL',               color: '#9CA3AF', bg: '#1a1a2e', pattern: null,        stars: 0, fullArt: false },
-  VETERAN:            { label: '⚔ VÉTÉRAN',            color: '#34D399', bg: '#0a1a12', pattern: null,        stars: 1, fullArt: false },
-  ELITE:              { label: '◆ ÉLITE',               color: '#38BDF8', bg: '#0c1a2e', pattern: null,        stars: 2, fullArt: false },
-  EPIQUE:             { label: '✦ ÉPIQUE',              color: '#A855F7', bg: '#120a1a', pattern: 'dots',      stars: 3, fullArt: false },
-  LEGEND:             { label: '★ LÉGENDAIRE',          color: '#fbc059', bg: '#1a1200', pattern: 'triangles', stars: 5, fullArt: true  },
-  'COUP DE COEUR':    { label: '💛 COUP DE CŒUR',       color: '#F472B6', bg: '#1a0a14', pattern: 'diamonds',  stars: 4, fullArt: true  },
-  'RPEDIA VALIDATION':{ label: '⚜️ RPÉDIA VALIDATION',  color: '#fbc059', bg: '#0a0a0a', pattern: 'triangles', stars: 6, fullArt: true  },
-  SHINY:              { label: '✦ SHINY',               color: '#67E8F9', bg: '#0c1a2e', pattern: 'diamonds',  stars: 3, fullArt: true  },
-  SECRET:             { label: '◈ SECRET',              color: '#F472B6', bg: '#050005', pattern: 'dots',      stars: 4, fullArt: true  },
-  SUPREME:            { label: '👁 SUPRÊME',             color: '#FF1A1A', bg: '#070000', pattern: null,        stars: 0, fullArt: true  },
-  ABYSSAL:            { label: '🌊 ABYSSAL',             color: '#0EA5E9', bg: '#000a14', pattern: null,        stars: 0, fullArt: true  },
-  ANCESTRAL:              { label: '✦ ANCESTRAL',                color: '#FFF9C4', bg: '#0a0800', pattern: null,        stars: 0, fullArt: true  },
-  COSMIQUE:           { label: '🌌 COSMIQUE',            color: '#C084FC', bg: '#020008', pattern: null,        stars: 0, fullArt: true  },
-  NECROSIS:           { label: '☠ NÉCROSIS',             color: '#4ADE80', bg: '#010800', pattern: null,        stars: 0, fullArt: true  },
+  NORMAL:    { label: 'NORMAL',          color: '#9CA3AF', bg: '#1a1a2e', pattern: null,        stars: 0, fullArt: false },
+  VETERAN:   { label: '⚔ VÉTÉRAN',       color: '#34D399', bg: '#0a1a12', pattern: null,        stars: 1, fullArt: false },
+  ELITE:     { label: '◆ ÉLITE',          color: '#38BDF8', bg: '#0c1a2e', pattern: null,        stars: 2, fullArt: false },
+  EPIQUE:    { label: '✦ ÉPIQUE',         color: '#A855F7', bg: '#120a1a', pattern: 'dots',      stars: 3, fullArt: true  },
+  SECRET:    { label: '◈ SECRET',         color: '#F472B6', bg: '#050005', pattern: 'dots',      stars: 4, fullArt: true  },
+  LEGENDAIRE:{ label: '★ LÉGENDAIRE',     color: '#fbc059', bg: '#0a0e1a', pattern: 'triangles', stars: 5, fullArt: true  },
+  ANCESTRAL: { label: '✦ ANCESTRAL',      color: '#FFF9C4', bg: '#0a0800', pattern: null,        stars: 0, fullArt: true  },
+  ICONE:     { label: '👁 ICÔNE',          color: '#FF1A1A', bg: '#070000', pattern: null,        stars: 0, fullArt: true  },
 }
 
 export const RARITY_WEIGHTS = [
-  { rarity: 'SUPREME',           weight: 0.05 },
-  { rarity: 'ANCESTRAL',         weight: 0.06 },
-  { rarity: 'ABYSSAL',           weight: 0.07 },
-  { rarity: 'COSMIQUE',          weight: 0.08 },
-  { rarity: 'NECROSIS',          weight: 0.09 },
-  { rarity: 'SECRET',            weight: 0.1  },
-  { rarity: 'SHINY',             weight: 0.4  },
-  { rarity: 'RPEDIA VALIDATION', weight: 0.5  },
-  { rarity: 'COUP DE COEUR',     weight: 1    },
-  { rarity: 'LEGEND',            weight: 3    },
-  { rarity: 'EPIQUE',            weight: 10   },
-  { rarity: 'ELITE',             weight: 15   },
-  { rarity: 'VETERAN',           weight: 25   },
-  { rarity: 'NORMAL',            weight: 45   },
+  { rarity: 'ICONE',      weight: 0.05  },
+  { rarity: 'ANCESTRAL',  weight: 0.07  },
+  { rarity: 'LEGENDAIRE', weight: 2.83  },
+  { rarity: 'SECRET',     weight: 2     },
+  { rarity: 'EPIQUE',     weight: 10.05 },
+  { rarity: 'ELITE',      weight: 15    },
+  { rarity: 'VETERAN',    weight: 25    },
+  { rarity: 'NORMAL',     weight: 45    },
 ]
 
 export function rollRarity() {
@@ -41,6 +40,12 @@ export function rollRarity() {
     rand -= weight
     if (rand <= 0) return rarity
   }
+  return 'NORMAL'
+}
+
+// Helper : normalise les anciennes raretés supprimées vers NORMAL
+export function normalizeRarity(r) {
+  if (rarities[r]) return r
   return 'NORMAL'
 }
 
@@ -54,8 +59,8 @@ const rankColors = {
 
 const RUNES = ['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ','ᚺ','ᚾ','ᛁ','ᛃ','ᛇ','ᛈ','ᛉ','ᛊ','ᛏ','ᛒ','ᛖ','ᛗ','ᛚ','ᛜ','ᛞ','ᛟ']
 
-// ─── SUPREME CSS animations ───────────────────────────────────────────────────
-const SUPREME_STYLES = `
+// ─── ICONE CSS animations (= anciennement SUPREME, rouge/flammes/œil) ─────────
+const ICONE_STYLES = `
   @keyframes heartbeat {
     0%   { box-shadow: 0 0 15px #FF0000aa, 0 0 40px #FF000033; }
     14%  { box-shadow: 0 0 40px #FF0000ff, 0 0 80px #FF000066, 0 0 120px #FF000022; }
@@ -118,11 +123,11 @@ const SUPREME_STYLES = `
     0%   { transform: translateY(0) scale(1); opacity: 0.15; }
     100% { transform: translateY(-60px) scale(2.5); opacity: 0; }
   }
-  .supreme-card     { animation: heartbeat 1.6s ease-in-out infinite; }
-  .supreme-border   { animation: borderFlicker 3s ease-in-out infinite; }
-  .crack-pulse      { animation: crackPulse 2.2s ease-in-out infinite; }
-  .eye-blink        { animation: eyeBlink 5s ease-in-out infinite; }
-  .pupil-move       { animation: pupilMove 4s ease-in-out infinite; }
+  .icone-card     { animation: heartbeat 1.6s ease-in-out infinite; }
+  .icone-border   { animation: borderFlicker 3s ease-in-out infinite; }
+  .crack-pulse    { animation: crackPulse 2.2s ease-in-out infinite; }
+  .eye-blink      { animation: eyeBlink 5s ease-in-out infinite; }
+  .pupil-move     { animation: pupilMove 4s ease-in-out infinite; }
   .rune-0  { animation: runeFloat 3.5s ease-in-out infinite 0.0s; }
   .rune-1  { animation: runeFloat 2.8s ease-in-out infinite 0.6s; }
   .rune-2  { animation: runeFloat 4.0s ease-in-out infinite 1.1s; }
@@ -145,36 +150,28 @@ const SUPREME_STYLES = `
   .smoke-3 { animation: smokeRise 3.5s ease-out infinite 2.0s; }
 `
 
-function SupremeEffects() {
+function IconeEffects() {
   return (
     <>
-      <style>{SUPREME_STYLES}</style>
+      <style>{ICONE_STYLES}</style>
 
       {/* Border rouge flicker */}
-      <div className="supreme-border absolute inset-0 rounded-2xl pointer-events-none" style={{
-        zIndex: 20,
-        border: '2px solid #FF1A1A',
-        borderRadius: 16,
+      <div className="icone-border absolute inset-0 rounded-2xl pointer-events-none" style={{
+        zIndex: 20, border: '2px solid #FF1A1A', borderRadius: 16,
       }} />
 
       {/* Craquelures SVG */}
       <div className="crack-pulse absolute inset-0 pointer-events-none" style={{ zIndex: 8 }}>
         <svg width="100%" height="100%" viewBox="0 0 100 133" preserveAspectRatio="none">
-          {/* Craquelure centrale principale */}
           <path d="M50,0 L49,12 L52,18 L47,30 L51,35 L46,52 L50,56" stroke="#FF2200" strokeWidth="0.5" fill="none" strokeLinecap="round"/>
-          {/* Branches gauche */}
           <path d="M47,30 L40,36 L38,48" stroke="#CC1100" strokeWidth="0.3" fill="none" strokeLinecap="round"/>
           <path d="M46,52 L38,58 L35,70 L37,78" stroke="#AA0000" strokeWidth="0.25" fill="none" strokeLinecap="round"/>
-          {/* Branches droite */}
           <path d="M51,35 L60,42 L63,55" stroke="#CC1100" strokeWidth="0.3" fill="none" strokeLinecap="round"/>
           <path d="M50,56 L60,63 L62,75 L58,85" stroke="#AA0000" strokeWidth="0.25" fill="none" strokeLinecap="round"/>
-          {/* Craquelures latérales */}
           <path d="M0,45 L10,50 L15,58 L12,68" stroke="#880000" strokeWidth="0.2" fill="none" strokeLinecap="round"/>
           <path d="M100,35 L90,42 L87,55 L91,62" stroke="#880000" strokeWidth="0.2" fill="none" strokeLinecap="round"/>
-          {/* Microfissures */}
           <path d="M30,80 L35,85 L33,92" stroke="#661100" strokeWidth="0.15" fill="none"/>
           <path d="M70,75 L65,82 L68,90" stroke="#661100" strokeWidth="0.15" fill="none"/>
-          {/* Lueurs aux intersections */}
           <circle cx="47" cy="30" r="0.8" fill="#FF4400" opacity="0.8"/>
           <circle cx="51" cy="35" r="0.8" fill="#FF4400" opacity="0.8"/>
           <circle cx="46" cy="52" r="1.0" fill="#FF2200" opacity="0.9"/>
@@ -182,7 +179,7 @@ function SupremeEffects() {
         </svg>
       </div>
 
-      {/* Gouttes de sang en haut */}
+      {/* Gouttes de sang */}
       <div className="absolute top-0 left-0 right-0 pointer-events-none" style={{ zIndex: 19, height: '30px', overflow: 'visible' }}>
         {[
           { left: '15%', cls: 'blood-1', w: 3 },
@@ -191,10 +188,7 @@ function SupremeEffects() {
           { left: '80%', cls: 'blood-4', w: 2.5 },
         ].map((b, i) => (
           <div key={i} className={b.cls} style={{
-            position: 'absolute',
-            top: 0,
-            left: b.left,
-            width: b.w,
+            position: 'absolute', top: 0, left: b.left, width: b.w,
             background: 'linear-gradient(to bottom, #CC0000, #880000)',
             borderRadius: '0 0 50% 50%',
             boxShadow: '0 0 4px #FF0000',
@@ -204,61 +198,46 @@ function SupremeEffects() {
 
       {/* Œil démoniaque */}
       <div className="absolute pointer-events-none" style={{ bottom: '32%', left: '50%', transform: 'translateX(-50%)', zIndex: 15 }}>
-        {/* Iris */}
         <div className="eye-blink" style={{
           width: 44, height: 22,
           background: 'radial-gradient(ellipse, #FF0000 0%, #880000 50%, #1a0000 80%)',
           borderRadius: '50%',
           border: '1.5px solid #FF2200',
           boxShadow: '0 0 12px #FF0000, 0 0 24px #FF000044',
-          overflow: 'hidden',
-          position: 'relative',
+          overflow: 'hidden', position: 'relative',
         }}>
-          {/* Pupille */}
           <div className="pupil-move" style={{
-            position: 'absolute',
-            top: '50%', left: '50%',
+            position: 'absolute', top: '50%', left: '50%',
             transform: 'translate(-50%, -50%)',
             width: 12, height: 16,
-            background: '#000000',
-            borderRadius: '50%',
+            background: '#000000', borderRadius: '50%',
             boxShadow: '0 0 4px #FF000066',
           }} />
-          {/* Reflet */}
           <div style={{
-            position: 'absolute',
-            top: '20%', left: '30%',
+            position: 'absolute', top: '20%', left: '30%',
             width: 5, height: 4,
-            background: 'rgba(255,100,100,0.4)',
-            borderRadius: '50%',
-            filter: 'blur(1px)',
+            background: 'rgba(255,100,100,0.4)', borderRadius: '50%', filter: 'blur(1px)',
           }} />
         </div>
-        {/* Cils démoniaques haut */}
         <svg style={{ position: 'absolute', top: -6, left: -4, width: 52, height: 12 }} viewBox="0 0 52 12">
           {[-18,-12,-6,0,6,12,18].map((x, i) => (
             <line key={i} x1={26+x} y1="10" x2={26+x*1.1} y2="0" stroke="#FF1100" strokeWidth="0.8" strokeLinecap="round"/>
           ))}
         </svg>
-        {/* Cils démoniaques bas */}
         <svg style={{ position: 'absolute', bottom: -6, left: -4, width: 52, height: 12 }} viewBox="0 0 52 12">
           {[-18,-12,-6,0,6,12,18].map((x, i) => (
             <line key={i} x1={26+x} y1="2" x2={26+x*1.1} y2="12" stroke="#FF1100" strokeWidth="0.8" strokeLinecap="round"/>
           ))}
         </svg>
-        {/* Glow autour de l'oeil */}
         <div style={{
-          position: 'absolute', inset: -10,
-          borderRadius: '50%',
+          position: 'absolute', inset: -10, borderRadius: '50%',
           background: 'radial-gradient(circle, #FF000033 0%, transparent 70%)',
-          filter: 'blur(6px)',
-          pointerEvents: 'none',
+          filter: 'blur(6px)', pointerEvents: 'none',
         }} />
       </div>
 
       {/* Flammes du bas */}
       <div className="absolute bottom-0 left-0 right-0 pointer-events-none overflow-hidden" style={{ height: '38%', zIndex: 9 }}>
-        {/* Couche 1 — grosses flammes de base */}
         {[
           { left: '2%',  w: 32, h: 65, cls: 'flame-a1', color1: '#FF2200', color2: '#FF4400' },
           { left: '22%', w: 26, h: 50, cls: 'flame-b1', color1: '#FF1100', color2: '#FF3300' },
@@ -270,11 +249,9 @@ function SupremeEffects() {
             position: 'absolute', bottom: 0, left: f.left,
             width: f.w, height: f.h,
             background: `radial-gradient(ellipse at 50% 90%, ${f.color1}ff 0%, ${f.color2}99 35%, transparent 75%)`,
-            borderRadius: '50% 50% 30% 30%',
-            filter: 'blur(4px)',
+            borderRadius: '50% 50% 30% 30%', filter: 'blur(4px)',
           }} />
         ))}
-        {/* Couche 2 — flammes secondaires */}
         {[
           { left: '12%', w: 20, h: 40, cls: 'flame-b2', color1: '#FF3300', color2: '#FF5500' },
           { left: '52%', w: 22, h: 45, cls: 'flame-c2', color1: '#FF2200', color2: '#FF4400' },
@@ -283,19 +260,16 @@ function SupremeEffects() {
             position: 'absolute', bottom: 0, left: f.left,
             width: f.w, height: f.h,
             background: `radial-gradient(ellipse at 50% 90%, ${f.color1}cc 0%, transparent 70%)`,
-            borderRadius: '50% 50% 30% 30%',
-            filter: 'blur(3px)',
+            borderRadius: '50% 50% 30% 30%', filter: 'blur(3px)',
           }} />
         ))}
-        {/* Glow rouge de sol */}
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0, height: 30,
-          background: 'linear-gradient(to top, #FF000077, transparent)',
-          filter: 'blur(3px)',
+          background: 'linear-gradient(to top, #FF000077, transparent)', filter: 'blur(3px)',
         }} />
       </div>
 
-      {/* Fumée au-dessus des flammes */}
+      {/* Fumée */}
       <div className="absolute pointer-events-none" style={{ bottom: '35%', left: 0, right: 0, zIndex: 8 }}>
         {[
           { left: '15%', cls: 'smoke-1', size: 18 },
@@ -303,9 +277,7 @@ function SupremeEffects() {
           { left: '75%', cls: 'smoke-3', size: 16 },
         ].map((s, i) => (
           <div key={i} className={s.cls} style={{
-            position: 'absolute',
-            left: s.left,
-            width: s.size, height: s.size,
+            position: 'absolute', left: s.left, width: s.size, height: s.size,
             borderRadius: '50%',
             background: 'radial-gradient(circle, rgba(80,0,0,0.3) 0%, transparent 70%)',
             filter: 'blur(6px)',
@@ -326,14 +298,12 @@ function SupremeEffects() {
           style={{
             left: ru.left, bottom: ru.bottom, zIndex: 11,
             fontSize: '0.8rem', color: '#FF3300', fontWeight: 'bold',
-            textShadow: '0 0 6px #FF0000, 0 0 14px #FF000088',
-            fontFamily: 'serif',
+            textShadow: '0 0 6px #FF0000, 0 0 14px #FF000088', fontFamily: 'serif',
           }}>
           {ru.r}
         </div>
       ))}
 
-      {/* Overlay rouge bas */}
       <div className="absolute inset-0 pointer-events-none" style={{
         zIndex: 6,
         background: 'radial-gradient(ellipse at 50% 110%, #FF000022 0%, transparent 55%)',
@@ -342,126 +312,7 @@ function SupremeEffects() {
   )
 }
 
-// ─── ABYSSAL effects ──────────────────────────────────────────────────────────
-const ABYSSAL_STYLES = `
-  @keyframes abyssalPulse {
-    0%,100% { box-shadow: 0 0 20px #0EA5E9aa, 0 0 60px #0EA5E933; }
-    50%     { box-shadow: 0 0 50px #0EA5E9ff, 0 0 100px #0EA5E966, 0 0 150px #0EA5E922; }
-  }
-  @keyframes tentacleWave {
-    0%   { transform: rotate(0deg) scaleY(1); }
-    25%  { transform: rotate(8deg) scaleY(1.15); }
-    75%  { transform: rotate(-8deg) scaleY(0.9); }
-    100% { transform: rotate(0deg) scaleY(1); }
-  }
-  @keyframes bubbleRise {
-    0%   { transform: translateY(0) scale(1); opacity: 0.7; }
-    80%  { transform: translateY(-70px) scale(0.6); opacity: 0.3; }
-    100% { transform: translateY(-90px) scale(0.2); opacity: 0; }
-  }
-  @keyframes waveScroll {
-    0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-  }
-  @keyframes abyssGlow {
-    0%,100% { opacity: 0.15; }
-    50%     { opacity: 0.4; }
-  }
-  .abyssal-card    { animation: abyssalPulse 3s ease-in-out infinite; }
-  .tentacle-1 { animation: tentacleWave 2.8s ease-in-out infinite 0.0s; transform-origin: bottom center; }
-  .tentacle-2 { animation: tentacleWave 3.2s ease-in-out infinite 0.4s; transform-origin: bottom center; }
-  .tentacle-3 { animation: tentacleWave 2.5s ease-in-out infinite 0.8s; transform-origin: bottom center; }
-  .tentacle-4 { animation: tentacleWave 3.6s ease-in-out infinite 0.2s; transform-origin: bottom center; }
-  .tentacle-5 { animation: tentacleWave 2.9s ease-in-out infinite 1.0s; transform-origin: bottom center; }
-  .bubble-1   { animation: bubbleRise 3.5s ease-in infinite 0.0s; }
-  .bubble-2   { animation: bubbleRise 4.2s ease-in infinite 0.7s; }
-  .bubble-3   { animation: bubbleRise 3.0s ease-in infinite 1.4s; }
-  .bubble-4   { animation: bubbleRise 5.0s ease-in infinite 0.3s; }
-  .bubble-5   { animation: bubbleRise 3.8s ease-in infinite 2.0s; }
-  .bubble-6   { animation: bubbleRise 4.5s ease-in infinite 1.0s; }
-  .wave-scroll { animation: waveScroll 6s linear infinite; }
-  .abyss-glow  { animation: abyssGlow 4s ease-in-out infinite; }
-`
-
-function AbyssalEffects() {
-  return (
-    <>
-      <style>{ABYSSAL_STYLES}</style>
-
-      {/* Vagues animées au bas */}
-      <div className="absolute bottom-0 left-0 right-0 pointer-events-none overflow-hidden" style={{ height: '35%', zIndex: 7 }}>
-        <div className="wave-scroll" style={{ display: 'flex', width: '200%', height: '100%' }}>
-          <svg viewBox="0 0 400 120" preserveAspectRatio="none" style={{ width: '50%', height: '100%', flexShrink: 0 }}>
-            <defs>
-              <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.5" />
-                <stop offset="100%" stopColor="#0369A1" stopOpacity="0.9" />
-              </linearGradient>
-            </defs>
-            <path d="M0,40 C50,10 100,70 150,40 C200,10 250,70 300,40 C350,10 400,70 400,40 L400,120 L0,120 Z" fill="url(#waveGrad)" />
-            <path d="M0,60 C60,30 120,90 180,60 C240,30 300,90 360,60 C380,50 400,65 400,60 L400,120 L0,120 Z" fill="#0EA5E9" opacity="0.2" />
-          </svg>
-          <svg viewBox="0 0 400 120" preserveAspectRatio="none" style={{ width: '50%', height: '100%', flexShrink: 0 }}>
-            <path d="M0,40 C50,10 100,70 150,40 C200,10 250,70 300,40 C350,10 400,70 400,40 L400,120 L0,120 Z" fill="url(#waveGrad)" />
-            <path d="M0,60 C60,30 120,90 180,60 C240,30 300,90 360,60 C380,50 400,65 400,60 L400,120 L0,120 Z" fill="#0EA5E9" opacity="0.2" />
-          </svg>
-        </div>
-      </div>
-
-      {/* Tentacules SVG sur les bords */}
-      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 8 }}>
-        <svg width="100%" height="100%" viewBox="0 0 100 133" preserveAspectRatio="none">
-          {/* Tentacules gauche */}
-          <path className="tentacle-1" d="M0,80 Q8,70 4,55 Q0,40 8,30" stroke="#0EA5E9" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.6"/>
-          <path className="tentacle-2" d="M0,95 Q12,85 8,70 Q4,55 12,45" stroke="#38BDF8" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.4"/>
-          {/* Tentacules droite */}
-          <path className="tentacle-3" d="M100,75 Q92,65 96,50 Q100,35 92,25" stroke="#0EA5E9" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.6"/>
-          <path className="tentacle-4" d="M100,90 Q88,80 92,65 Q96,50 88,40" stroke="#38BDF8" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.4"/>
-          {/* Tentacule du bas centre */}
-          <path className="tentacle-5" d="M50,133 Q45,120 50,108 Q55,96 48,85" stroke="#0EA5E9" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.5"/>
-          {/* Ventouses */}
-          <circle cx="4" cy="55" r="1.2" fill="#0EA5E9" opacity="0.5"/>
-          <circle cx="8" cy="30" r="1" fill="#38BDF8" opacity="0.4"/>
-          <circle cx="96" cy="50" r="1.2" fill="#0EA5E9" opacity="0.5"/>
-          <circle cx="92" cy="25" r="1" fill="#38BDF8" opacity="0.4"/>
-          <circle cx="50" cy="108" r="1" fill="#0EA5E9" opacity="0.4"/>
-        </svg>
-      </div>
-
-      {/* Bulles bioluminescentes */}
-      {[
-        { left: '15%', bottom: '32%', cls: 'bubble-1', size: 6  },
-        { left: '35%', bottom: '28%', cls: 'bubble-2', size: 4  },
-        { left: '55%', bottom: '36%', cls: 'bubble-3', size: 8  },
-        { left: '70%', bottom: '30%', cls: 'bubble-4', size: 5  },
-        { left: '25%', bottom: '45%', cls: 'bubble-5', size: 3  },
-        { left: '80%', bottom: '42%', cls: 'bubble-6', size: 7  },
-      ].map((b, i) => (
-        <div key={i} className={`absolute pointer-events-none ${b.cls}`} style={{
-          left: b.left, bottom: b.bottom, zIndex: 9,
-          width: b.size, height: b.size,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, #7DD3FC 0%, #0EA5E9 50%, transparent 80%)',
-          boxShadow: '0 0 6px #0EA5E9, 0 0 12px #0EA5E966',
-        }} />
-      ))}
-
-      {/* Glow abyssal bas */}
-      <div className="abyss-glow absolute inset-0 pointer-events-none" style={{
-        zIndex: 6,
-        background: 'radial-gradient(ellipse at 50% 120%, #0EA5E933 0%, transparent 60%)',
-      }} />
-
-      {/* Vignette bords sombres */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        zIndex: 5,
-        background: 'radial-gradient(ellipse at 50% 50%, transparent 40%, #000a1488 100%)',
-      }} />
-    </>
-  )
-}
-
-// ─── ANCESTRAL effects ────────────────────────────────────────────────────────────
+// ─── ANCESTRAL effects ────────────────────────────────────────────────────────
 const ANCESTRAL_STYLES = `
   @keyframes ancestralPulse {
     0%,100% { box-shadow: 0 0 25px #FFF9C4bb, 0 0 60px #FFF9C444; }
@@ -485,13 +336,13 @@ const ANCESTRAL_STYLES = `
     0%,100% { opacity: 0.3; }
     50%     { opacity: 0.7; }
   }
-  .ancestral-card     { animation: ancestralPulse 3s ease-in-out infinite; }
-  .ray-rotate     { animation: rayRotate 20s linear infinite; transform-origin: center; }
+  .ancestral-card   { animation: ancestralPulse 3s ease-in-out infinite; }
+  .ray-rotate       { animation: rayRotate 20s linear infinite; transform-origin: center; }
   .feather-1 { animation: featherFall 5s ease-in infinite 0.0s; }
   .feather-2 { animation: featherFall 7s ease-in infinite 1.5s; }
   .feather-3 { animation: featherFall 6s ease-in infinite 3.0s; }
   .feather-4 { animation: featherFall 8s ease-in infinite 0.8s; }
-  .halo-glow  { animation: haloGlow 2.5s ease-in-out infinite; }
+  .halo-glow    { animation: haloGlow 2.5s ease-in-out infinite; }
   .gold-shimmer { animation: goldShimmer 3s ease-in-out infinite; }
 `
 
@@ -503,41 +354,23 @@ function AncestralEffects() {
       {/* Rayons de lumière tournants */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 3 }}>
         <div className="ray-rotate" style={{
-          position: 'absolute',
-          top: '-50%', left: '-50%',
-          width: '200%', height: '200%',
+          position: 'absolute', top: '-50%', left: '-50%', width: '200%', height: '200%',
           background: `conic-gradient(
-            transparent 0deg,
-            rgba(255,249,196,0.06) 10deg,
-            transparent 20deg,
-            transparent 40deg,
-            rgba(255,249,196,0.04) 50deg,
-            transparent 60deg,
-            transparent 90deg,
-            rgba(255,249,196,0.05) 100deg,
-            transparent 110deg,
-            transparent 150deg,
-            rgba(255,249,196,0.07) 160deg,
-            transparent 170deg,
-            transparent 210deg,
-            rgba(255,249,196,0.04) 220deg,
-            transparent 230deg,
-            transparent 270deg,
-            rgba(255,249,196,0.06) 280deg,
-            transparent 290deg,
-            transparent 330deg,
-            rgba(255,249,196,0.05) 340deg,
-            transparent 360deg
+            transparent 0deg, rgba(255,249,196,0.06) 10deg, transparent 20deg,
+            transparent 40deg, rgba(255,249,196,0.04) 50deg, transparent 60deg,
+            transparent 90deg, rgba(255,249,196,0.05) 100deg, transparent 110deg,
+            transparent 150deg, rgba(255,249,196,0.07) 160deg, transparent 170deg,
+            transparent 210deg, rgba(255,249,196,0.04) 220deg, transparent 230deg,
+            transparent 270deg, rgba(255,249,196,0.06) 280deg, transparent 290deg,
+            transparent 330deg, rgba(255,249,196,0.05) 340deg, transparent 360deg
           )`,
         }} />
       </div>
 
       {/* Halo doré */}
       <div className="halo-glow absolute pointer-events-none" style={{
-        zIndex: 7,
-        top: '10%', left: '50%', transform: 'translateX(-50%)',
-        width: 60, height: 60,
-        borderRadius: '50%',
+        zIndex: 7, top: '10%', left: '50%', transform: 'translateX(-50%)',
+        width: 60, height: 60, borderRadius: '50%',
         border: '2px solid rgba(255,249,196,0.6)',
         boxShadow: '0 0 20px #FFF9C466, 0 0 40px #FFF9C422, inset 0 0 20px #FFF9C411',
       }} />
@@ -545,11 +378,9 @@ function AncestralEffects() {
       {/* Ailes SVG */}
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 6 }}>
         <svg width="100%" height="100%" viewBox="0 0 100 133" preserveAspectRatio="none">
-          {/* Aile gauche */}
           <path d="M50,25 Q20,35 5,55 Q15,50 50,45 Z" fill="rgba(255,249,196,0.08)" stroke="rgba(255,249,196,0.2)" strokeWidth="0.3"/>
           <path d="M50,30 Q18,42 2,68 Q15,58 50,52 Z" fill="rgba(255,249,196,0.06)" stroke="rgba(255,249,196,0.15)" strokeWidth="0.2"/>
           <path d="M50,35 Q22,50 8,78 Q20,65 50,58 Z" fill="rgba(255,249,196,0.04)" stroke="rgba(255,249,196,0.1)" strokeWidth="0.2"/>
-          {/* Aile droite (miroir) */}
           <path d="M50,25 Q80,35 95,55 Q85,50 50,45 Z" fill="rgba(255,249,196,0.08)" stroke="rgba(255,249,196,0.2)" strokeWidth="0.3"/>
           <path d="M50,30 Q82,42 98,68 Q85,58 50,52 Z" fill="rgba(255,249,196,0.06)" stroke="rgba(255,249,196,0.15)" strokeWidth="0.2"/>
           <path d="M50,35 Q78,50 92,78 Q80,65 50,58 Z" fill="rgba(255,249,196,0.04)" stroke="rgba(255,249,196,0.1)" strokeWidth="0.2"/>
@@ -563,9 +394,7 @@ function AncestralEffects() {
         { left: '62%', cls: 'feather-3' },
         { left: '82%', cls: 'feather-4' },
       ].map((f, i) => (
-        <div key={i} className={`absolute pointer-events-none ${f.cls}`} style={{
-          top: 0, left: f.left, zIndex: 9,
-        }}>
+        <div key={i} className={`absolute pointer-events-none ${f.cls}`} style={{ top: 0, left: f.left, zIndex: 9 }}>
           <svg width="8" height="20" viewBox="0 0 8 20">
             <path d="M4,0 Q6,5 4,10 Q2,5 4,0 Z" fill="rgba(255,249,196,0.7)"/>
             <line x1="4" y1="0" x2="4" y2="20" stroke="rgba(255,249,196,0.4)" strokeWidth="0.5"/>
@@ -573,7 +402,6 @@ function AncestralEffects() {
         </div>
       ))}
 
-      {/* Shimmer doré global */}
       <div className="gold-shimmer absolute inset-0 pointer-events-none" style={{
         zIndex: 4,
         background: 'radial-gradient(ellipse at 50% 20%, rgba(255,249,196,0.1) 0%, transparent 60%)',
@@ -582,189 +410,269 @@ function AncestralEffects() {
   )
 }
 
-// ─── COSMIQUE effects ─────────────────────────────────────────────────────────
-const COSMIQUE_STYLES = `
-  @keyframes cosmicPulse {
-    0%,100% { box-shadow: 0 0 20px #C084FCaa, 0 0 50px #C084FC33; }
-    50%     { box-shadow: 0 0 50px #C084FCff, 0 0 100px #C084FC66, 0 0 180px #C084FC22; }
+// ─── LEGENDAIRE effects (= Cosmique avec teintes or/bleu marine) ──────────────
+const LEGENDAIRE_STYLES = `
+  @keyframes legendairePulse {
+    0%,100% { box-shadow: 0 0 20px #fbc059aa, 0 0 50px #1a2a6c33; }
+    50%     { box-shadow: 0 0 50px #fbc059ff, 0 0 100px #1a2a6c66, 0 0 180px #fbc05922; }
   }
-  @keyframes nebulaShift {
+  @keyframes legendNebulaShift {
     0%   { transform: translate(0,0) scale(1); }
     33%  { transform: translate(5px,-3px) scale(1.05); }
     66%  { transform: translate(-3px,5px) scale(0.97); }
     100% { transform: translate(0,0) scale(1); }
   }
-  @keyframes starTwinkle {
+  @keyframes legendStarTwinkle {
     0%,100% { opacity: 0.2; transform: scale(0.8); }
     50%     { opacity: 1; transform: scale(1.3); }
   }
-  @keyframes shootingStar {
+  @keyframes legendShootingStar {
     0%   { transform: translateX(-20px) translateY(-20px); opacity: 0; }
     10%  { opacity: 1; }
     100% { transform: translateX(80px) translateY(80px); opacity: 0; }
   }
-  @keyframes warpRing {
+  @keyframes legendWarpRing {
     0%   { transform: scale(0.8) rotate(0deg); opacity: 0.6; }
     100% { transform: scale(1.4) rotate(180deg); opacity: 0; }
   }
-  .cosmic-card     { animation: cosmicPulse 3s ease-in-out infinite; }
-  .nebula-shift    { animation: nebulaShift 8s ease-in-out infinite; }
-  .star-twinkle-1  { animation: starTwinkle 1.8s ease-in-out infinite 0.0s; }
-  .star-twinkle-2  { animation: starTwinkle 2.4s ease-in-out infinite 0.5s; }
-  .star-twinkle-3  { animation: starTwinkle 1.5s ease-in-out infinite 1.0s; }
-  .star-twinkle-4  { animation: starTwinkle 2.8s ease-in-out infinite 0.3s; }
-  .star-twinkle-5  { animation: starTwinkle 2.0s ease-in-out infinite 1.5s; }
-  .star-twinkle-6  { animation: starTwinkle 1.6s ease-in-out infinite 0.8s; }
-  .star-twinkle-7  { animation: starTwinkle 2.2s ease-in-out infinite 2.0s; }
-  .star-twinkle-8  { animation: starTwinkle 1.9s ease-in-out infinite 1.2s; }
-  .shooting-1 { animation: shootingStar 3.5s ease-in infinite 0.5s; }
-  .shooting-2 { animation: shootingStar 5s ease-in infinite 2.5s; }
-  .warp-ring  { animation: warpRing 4s ease-out infinite; }
+  .legendaire-card     { animation: legendairePulse 3s ease-in-out infinite; }
+  .legend-nebula-shift { animation: legendNebulaShift 8s ease-in-out infinite; }
+  .legend-star-1  { animation: legendStarTwinkle 1.8s ease-in-out infinite 0.0s; }
+  .legend-star-2  { animation: legendStarTwinkle 2.4s ease-in-out infinite 0.5s; }
+  .legend-star-3  { animation: legendStarTwinkle 1.5s ease-in-out infinite 1.0s; }
+  .legend-star-4  { animation: legendStarTwinkle 2.8s ease-in-out infinite 0.3s; }
+  .legend-star-5  { animation: legendStarTwinkle 2.0s ease-in-out infinite 1.5s; }
+  .legend-star-6  { animation: legendStarTwinkle 1.6s ease-in-out infinite 0.8s; }
+  .legend-star-7  { animation: legendStarTwinkle 2.2s ease-in-out infinite 2.0s; }
+  .legend-star-8  { animation: legendStarTwinkle 1.9s ease-in-out infinite 1.2s; }
+  .legend-shoot-1 { animation: legendShootingStar 3.5s ease-in infinite 0.5s; }
+  .legend-shoot-2 { animation: legendShootingStar 5s ease-in infinite 2.5s; }
+  .legend-warp    { animation: legendWarpRing 4s ease-out infinite; }
 `
 
-function CosmiqueEffects() {
+function LegendaireEffects() {
+  // Couleurs or + bleu marine
+  const goldStar = '#fbc059'
+  const navyStar = '#1a4a8a'
+  const starColors = [goldStar, navyStar, goldStar, navyStar, goldStar, navyStar, goldStar, navyStar]
+  const starClasses = ['legend-star-1','legend-star-2','legend-star-3','legend-star-4','legend-star-5','legend-star-6','legend-star-7','legend-star-8']
+  const starPositions = [
+    { top: '8%',  left: '15%' }, { top: '15%', left: '70%' },
+    { top: '25%', left: '40%' }, { top: '35%', left: '85%' },
+    { top: '45%', left: '10%' }, { top: '20%', left: '55%' },
+    { top: '55%', left: '30%' }, { top: '12%', left: '90%' },
+  ]
+  const starSizes = [2.5, 1.5, 3, 2, 1.5, 2, 1.8, 2.5]
+
   return (
     <>
-      <style>{COSMIQUE_STYLES}</style>
+      <style>{LEGENDAIRE_STYLES}</style>
 
-      {/* Nébuleuse en fond */}
-      <div className="nebula-shift absolute inset-0 pointer-events-none" style={{ zIndex: 2 }}>
+      {/* Nébuleuse or/bleu */}
+      <div className="legend-nebula-shift absolute inset-0 pointer-events-none" style={{ zIndex: 2 }}>
         <div style={{
-          position: 'absolute', top: '10%', left: '20%',
-          width: '70%', height: '60%',
-          background: 'radial-gradient(ellipse, #7C3AED22 0%, #C084FC11 40%, transparent 70%)',
-          filter: 'blur(12px)',
-          borderRadius: '50%',
+          position: 'absolute', top: '10%', left: '20%', width: '70%', height: '60%',
+          background: 'radial-gradient(ellipse, #1a2a6c22 0%, #fbc05911 40%, transparent 70%)',
+          filter: 'blur(12px)', borderRadius: '50%',
         }} />
         <div style={{
-          position: 'absolute', top: '30%', left: '5%',
-          width: '50%', height: '40%',
-          background: 'radial-gradient(ellipse, #2563EB18 0%, #818CF811 40%, transparent 70%)',
-          filter: 'blur(10px)',
-          borderRadius: '50%',
+          position: 'absolute', top: '30%', left: '5%', width: '50%', height: '40%',
+          background: 'radial-gradient(ellipse, #fbc05918 0%, #b8860b11 40%, transparent 70%)',
+          filter: 'blur(10px)', borderRadius: '50%',
         }} />
         <div style={{
-          position: 'absolute', top: '15%', right: '5%',
-          width: '45%', height: '35%',
-          background: 'radial-gradient(ellipse, #EC489922 0%, transparent 70%)',
-          filter: 'blur(8px)',
-          borderRadius: '50%',
+          position: 'absolute', top: '15%', right: '5%', width: '45%', height: '35%',
+          background: 'radial-gradient(ellipse, #1a2a6c22 0%, transparent 70%)',
+          filter: 'blur(8px)', borderRadius: '50%',
         }} />
       </div>
 
-      {/* Étoiles scintillantes */}
-      {[
-        { top: '8%',  left: '15%', cls: 'star-twinkle-1', size: 2.5 },
-        { top: '15%', left: '70%', cls: 'star-twinkle-2', size: 1.5 },
-        { top: '25%', left: '40%', cls: 'star-twinkle-3', size: 3   },
-        { top: '35%', left: '85%', cls: 'star-twinkle-4', size: 2   },
-        { top: '45%', left: '10%', cls: 'star-twinkle-5', size: 1.5 },
-        { top: '20%', left: '55%', cls: 'star-twinkle-6', size: 2   },
-        { top: '55%', left: '30%', cls: 'star-twinkle-7', size: 1.8 },
-        { top: '12%', left: '90%', cls: 'star-twinkle-8', size: 2.5 },
-      ].map((s, i) => (
-        <div key={i} className={`absolute pointer-events-none ${s.cls}`} style={{
+      {/* Étoiles scintillantes or/bleu */}
+      {starPositions.map((s, i) => (
+        <div key={i} className={`absolute pointer-events-none ${starClasses[i]}`} style={{
           top: s.top, left: s.left, zIndex: 8,
-          width: s.size, height: s.size,
-          borderRadius: '50%',
-          background: '#fff',
-          boxShadow: `0 0 ${s.size * 2}px #C084FC, 0 0 ${s.size * 4}px #C084FC55`,
+          width: starSizes[i], height: starSizes[i], borderRadius: '50%',
+          background: starColors[i],
+          boxShadow: `0 0 ${starSizes[i] * 2}px ${starColors[i]}, 0 0 ${starSizes[i] * 4}px ${starColors[i]}55`,
         }} />
       ))}
 
       {/* Étoiles filantes */}
       {[
-        { top: '10%', left: '5%',  cls: 'shooting-1' },
-        { top: '30%', left: '20%', cls: 'shooting-2' },
+        { top: '10%', left: '5%',  cls: 'legend-shoot-1' },
+        { top: '30%', left: '20%', cls: 'legend-shoot-2' },
       ].map((s, i) => (
         <div key={i} className={`absolute pointer-events-none ${s.cls}`} style={{
           top: s.top, left: s.left, zIndex: 9,
           width: 40, height: 1.5,
-          background: 'linear-gradient(to right, transparent, #E0AAFF, white)',
-          borderRadius: 2,
-          filter: 'blur(0.5px)',
-          transform: 'rotate(35deg)',
+          background: 'linear-gradient(to right, transparent, #fbc059, #fff8dc)',
+          borderRadius: 2, filter: 'blur(0.5px)', transform: 'rotate(35deg)',
         }} />
       ))}
 
-      {/* Anneau warp */}
-      <div className="warp-ring absolute pointer-events-none" style={{
-        zIndex: 7,
-        top: '50%', left: '50%',
-        transform: 'translate(-50%, -50%)',
+      {/* Anneau warp doré */}
+      <div className="legend-warp absolute pointer-events-none" style={{
+        zIndex: 7, top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
         width: 80, height: 40,
-        border: '1px solid rgba(192,132,252,0.4)',
+        border: '1px solid rgba(251,192,89,0.4)',
         borderRadius: '50%',
-        boxShadow: '0 0 10px #C084FC44',
+        boxShadow: '0 0 10px #fbc05944',
       }} />
 
-      {/* Overlay cosmique */}
+      {/* Overlay sombre bleu marine */}
       <div className="absolute inset-0 pointer-events-none" style={{
         zIndex: 3,
-        background: 'radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(2,0,8,0.5) 100%)',
+        background: 'radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,5,20,0.55) 100%)',
       }} />
     </>
   )
 }
 
-// ─── NECROSIS effects ─────────────────────────────────────────────────────────
-const NECROSIS_STYLES = `
-  @keyframes necrosisPulse {
-    0%,100% { box-shadow: 0 0 20px #4ADE80aa, 0 0 50px #4ADE8033; }
-    33%     { box-shadow: 0 0 40px #22C55Eff, 0 0 80px #22C55E55; }
-    66%     { box-shadow: 0 0 10px #16A34A88, 0 0 20px #16A34A22; }
+// ─── SECRET effects (= RPédia Validation : holographique arc-en-ciel) ─────────
+const SECRET_STYLES = `
+  @keyframes holoPulse {
+    0%,100% { box-shadow: 0 0 20px #F472B6aa, 0 0 50px #F472B633; }
+    25%  { box-shadow: 0 0 30px #ff0080ff, 0 0 60px #ff008066; }
+    50%  { box-shadow: 0 0 30px #00cfffaa, 0 0 60px #00cfff44; }
+    75%  { box-shadow: 0 0 30px #8000ffaa, 0 0 60px #8000ff44; }
   }
-  @keyframes toxicBubble {
+  @keyframes holoSpin {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  @keyframes holoShimmer {
+    0%   { opacity: 0.4; transform: translateX(-100%) skewX(-20deg); }
+    100% { opacity: 0; transform: translateX(200%) skewX(-20deg); }
+  }
+  @keyframes rainbowBorder {
+    0%   { border-color: #ff0080; box-shadow: 0 0 8px #ff0080; }
+    17%  { border-color: #ff8c00; box-shadow: 0 0 8px #ff8c00; }
+    33%  { border-color: #ffe100; box-shadow: 0 0 8px #ffe100; }
+    50%  { border-color: #00ff9d; box-shadow: 0 0 8px #00ff9d; }
+    67%  { border-color: #00cfff; box-shadow: 0 0 8px #00cfff; }
+    83%  { border-color: #8000ff; box-shadow: 0 0 8px #8000ff; }
+    100% { border-color: #ff0080; box-shadow: 0 0 8px #ff0080; }
+  }
+  .secret-card       { animation: holoPulse 3s ease-in-out infinite; }
+  .secret-border-anim { animation: rainbowBorder 3s linear infinite; }
+  .holo-shimmer      { animation: holoShimmer 2.5s ease-in-out infinite; }
+  .holo-ring-spin    { animation: holoSpin 8s linear infinite; transform-origin: center; }
+`
+
+function SecretEffects() {
+  return (
+    <>
+      <style>{SECRET_STYLES}</style>
+
+      {/* Bordure arc-en-ciel animée */}
+      <div className="secret-border-anim absolute inset-0 pointer-events-none" style={{
+        zIndex: 20, borderRadius: 16, border: '2px solid #ff0080',
+      }} />
+
+      {/* Shimmer holographique */}
+      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 10, borderRadius: 16, pointerEvents: 'none' }}>
+        <div className="holo-shimmer" style={{
+          position: 'absolute', top: 0, bottom: 0, width: '40%',
+          background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.25), transparent)',
+        }} />
+      </div>
+
+      {/* Anneaux holo concentriques */}
+      <div className="holo-ring-spin absolute inset-0 pointer-events-none" style={{ zIndex: 5 }}>
+        <svg width="100%" height="100%" viewBox="0 0 100 133" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="holoGrad1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#ff0080" stopOpacity="0.3"/>
+              <stop offset="33%" stopColor="#00cfff" stopOpacity="0.3"/>
+              <stop offset="66%" stopColor="#ffe100" stopOpacity="0.3"/>
+              <stop offset="100%" stopColor="#ff0080" stopOpacity="0.3"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="50" cy="66" rx="45" ry="60" stroke="url(#holoGrad1)" strokeWidth="0.4" fill="none"/>
+          <ellipse cx="50" cy="66" rx="35" ry="47" stroke="url(#holoGrad1)" strokeWidth="0.3" fill="none"/>
+          <ellipse cx="50" cy="66" rx="22" ry="30" stroke="url(#holoGrad1)" strokeWidth="0.2" fill="none"/>
+        </svg>
+      </div>
+
+      {/* Glitch lignes */}
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 8 }}>
+        {[15, 38, 62, 85].map((top, i) => (
+          <div key={i} style={{
+            position: 'absolute', top: `${top}%`, left: 0, right: 0,
+            height: 1,
+            background: i % 2 === 0
+              ? 'linear-gradient(to right, transparent, rgba(255,0,128,0.3), transparent)'
+              : 'linear-gradient(to right, transparent, rgba(0,207,255,0.3), transparent)',
+          }} />
+        ))}
+      </div>
+
+      {/* Overlay arc-en-ciel subtil */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        zIndex: 4,
+        background: 'linear-gradient(135deg, rgba(255,0,128,0.04) 0%, rgba(0,207,255,0.04) 50%, rgba(128,0,255,0.04) 100%)',
+      }} />
+    </>
+  )
+}
+
+// ─── EPIQUE effects (= Necrosis VIOLET au lieu de vert) ───────────────────────
+const EPIQUE_STYLES = `
+  @keyframes epiquePulse {
+    0%,100% { box-shadow: 0 0 20px #A855F7aa, 0 0 50px #A855F733; }
+    33%     { box-shadow: 0 0 40px #9333eaff, 0 0 80px #9333ea55; }
+    66%     { box-shadow: 0 0 10px #7e22ce88, 0 0 20px #7e22ce22; }
+  }
+  @keyframes epiqueToxicBubble {
     0%   { transform: translateY(0) scale(1); opacity: 0.8; }
     70%  { transform: translateY(-50px) scale(0.5); opacity: 0.3; }
     100% { transform: translateY(-70px) scale(0); opacity: 0; }
   }
-  @keyframes drip {
+  @keyframes epiqueDrip {
     0%   { height: 0; opacity: 0.9; }
     70%  { height: 24px; opacity: 0.8; }
     100% { height: 28px; opacity: 0; }
   }
-  @keyframes glitchShift {
+  @keyframes epiqueGlitch {
     0%,90%,100% { transform: translateX(0); filter: none; }
     92%   { transform: translateX(-2px); filter: hue-rotate(90deg) brightness(1.5); }
     94%   { transform: translateX(2px); filter: hue-rotate(-90deg); }
     96%   { transform: translateX(0); filter: none; }
   }
-  @keyframes rotDecay {
+  @keyframes epiqueRotDecay {
     0%,100% { opacity: 0.15; }
     50%     { opacity: 0.35; }
   }
-  .necrosis-card  { animation: necrosisPulse 2s ease-in-out infinite; }
-  .necrosis-glitch { animation: glitchShift 4s ease-in-out infinite; }
-  .tox-bubble-1  { animation: toxicBubble 3.5s ease-in infinite 0.0s; }
-  .tox-bubble-2  { animation: toxicBubble 4.2s ease-in infinite 0.8s; }
-  .tox-bubble-3  { animation: toxicBubble 3.0s ease-in infinite 1.6s; }
-  .tox-bubble-4  { animation: toxicBubble 5.0s ease-in infinite 0.4s; }
-  .tox-bubble-5  { animation: toxicBubble 3.8s ease-in infinite 2.2s; }
-  .poison-drip-1 { animation: drip 4.5s ease-in infinite 0.0s; transform-origin: top; }
-  .poison-drip-2 { animation: drip 6.0s ease-in infinite 1.5s; transform-origin: top; }
-  .poison-drip-3 { animation: drip 3.5s ease-in infinite 3.0s; transform-origin: top; }
-  .rot-decay     { animation: rotDecay 3s ease-in-out infinite; }
+  .epique-card    { animation: epiquePulse 2s ease-in-out infinite; }
+  .epique-glitch  { animation: epiqueGlitch 4s ease-in-out infinite; }
+  .epique-bubble-1  { animation: epiqueToxicBubble 3.5s ease-in infinite 0.0s; }
+  .epique-bubble-2  { animation: epiqueToxicBubble 4.2s ease-in infinite 0.8s; }
+  .epique-bubble-3  { animation: epiqueToxicBubble 3.0s ease-in infinite 1.6s; }
+  .epique-bubble-4  { animation: epiqueToxicBubble 5.0s ease-in infinite 0.4s; }
+  .epique-bubble-5  { animation: epiqueToxicBubble 3.8s ease-in infinite 2.2s; }
+  .epique-drip-1  { animation: epiqueDrip 4.5s ease-in infinite 0.0s; transform-origin: top; }
+  .epique-drip-2  { animation: epiqueDrip 6.0s ease-in infinite 1.5s; transform-origin: top; }
+  .epique-drip-3  { animation: epiqueDrip 3.5s ease-in infinite 3.0s; transform-origin: top; }
+  .epique-rot     { animation: epiqueRotDecay 3s ease-in-out infinite; }
 `
 
-function NecrosisEffects() {
+function EpiqueEffects() {
   return (
     <>
-      <style>{NECROSIS_STYLES}</style>
+      <style>{EPIQUE_STYLES}</style>
 
-      {/* Glitch global */}
-      <div className="necrosis-glitch absolute inset-0 pointer-events-none" style={{ zIndex: 5 }} />
+      {/* Glitch global violet */}
+      <div className="epique-glitch absolute inset-0 pointer-events-none" style={{ zIndex: 5 }} />
 
-      {/* Texture de pourriture — cercles verts sombres */}
-      <div className="rot-decay absolute inset-0 pointer-events-none" style={{ zIndex: 2 }}>
+      {/* Texture de pourriture violette */}
+      <div className="epique-rot absolute inset-0 pointer-events-none" style={{ zIndex: 2 }}>
         <svg width="100%" height="100%" viewBox="0 0 100 133">
           {[
             [20,30,8],[45,55,6],[70,25,10],[15,75,7],[60,85,5],[80,50,9],[35,110,6],[55,15,5]
           ].map(([x,y,r], i) => (
-            <circle key={i} cx={x} cy={y} r={r} fill="none" stroke="#16A34A" strokeWidth="0.3" opacity="0.4"/>
+            <circle key={i} cx={x} cy={y} r={r} fill="none" stroke="#7e22ce" strokeWidth="0.3" opacity="0.4"/>
           ))}
-          {/* Os SVG */}
-          <g opacity="0.25" stroke="#4ADE80" strokeWidth="0.4" fill="none">
+          <g opacity="0.25" stroke="#A855F7" strokeWidth="0.4" fill="none">
             <line x1="10" y1="40" x2="20" y2="50"/>
             <circle cx="10" cy="40" r="2"/><circle cx="20" cy="50" r="2"/>
             <line x1="75" y1="35" x2="85" y2="45"/>
@@ -775,59 +683,56 @@ function NecrosisEffects() {
         </svg>
       </div>
 
-      {/* Gouttes de poison en haut */}
+      {/* Gouttes de poison violet en haut */}
       <div className="absolute top-0 left-0 right-0 pointer-events-none" style={{ zIndex: 19, height: '35px', overflow: 'visible' }}>
         {[
-          { left: '20%', cls: 'poison-drip-1', w: 3 },
-          { left: '50%', cls: 'poison-drip-2', w: 2.5 },
-          { left: '75%', cls: 'poison-drip-3', w: 3.5 },
+          { left: '20%', cls: 'epique-drip-1', w: 3 },
+          { left: '50%', cls: 'epique-drip-2', w: 2.5 },
+          { left: '75%', cls: 'epique-drip-3', w: 3.5 },
         ].map((d, i) => (
           <div key={i} className={d.cls} style={{
-            position: 'absolute', top: 0, left: d.left,
-            width: d.w,
-            background: 'linear-gradient(to bottom, #16A34A, #4ADE80)',
+            position: 'absolute', top: 0, left: d.left, width: d.w,
+            background: 'linear-gradient(to bottom, #7e22ce, #A855F7)',
             borderRadius: '0 0 50% 50%',
-            boxShadow: '0 0 4px #4ADE80',
+            boxShadow: '0 0 4px #A855F7',
           }} />
         ))}
       </div>
 
-      {/* Bulles toxiques */}
+      {/* Bulles violettes */}
       {[
-        { left: '10%', bottom: '38%', cls: 'tox-bubble-1', size: 5 },
-        { left: '30%', bottom: '32%', cls: 'tox-bubble-2', size: 7 },
-        { left: '52%', bottom: '40%', cls: 'tox-bubble-3', size: 4 },
-        { left: '68%', bottom: '35%', cls: 'tox-bubble-4', size: 6 },
-        { left: '85%', bottom: '42%', cls: 'tox-bubble-5', size: 5 },
+        { left: '10%', bottom: '38%', cls: 'epique-bubble-1', size: 5 },
+        { left: '30%', bottom: '32%', cls: 'epique-bubble-2', size: 7 },
+        { left: '52%', bottom: '40%', cls: 'epique-bubble-3', size: 4 },
+        { left: '68%', bottom: '35%', cls: 'epique-bubble-4', size: 6 },
+        { left: '85%', bottom: '42%', cls: 'epique-bubble-5', size: 5 },
       ].map((b, i) => (
         <div key={i} className={`absolute pointer-events-none ${b.cls}`} style={{
           left: b.left, bottom: b.bottom, zIndex: 9,
           width: b.size, height: b.size,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, #86EFAC 0%, #4ADE80 50%, transparent 80%)',
-          boxShadow: '0 0 4px #4ADE80, 0 0 8px #4ADE8055',
-          border: '0.5px solid #22C55E55',
+          background: 'radial-gradient(circle, #d8b4fe 0%, #A855F7 50%, transparent 80%)',
+          boxShadow: '0 0 4px #A855F7, 0 0 8px #A855F755',
+          border: '0.5px solid #9333ea55',
         }} />
       ))}
 
-      {/* Brume toxique bas */}
+      {/* Brume violette bas */}
       <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ height: '30%', zIndex: 7 }}>
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0, height: '100%',
-          background: 'linear-gradient(to top, rgba(22,163,74,0.25) 0%, rgba(74,222,128,0.08) 60%, transparent 100%)',
+          background: 'linear-gradient(to top, rgba(126,34,206,0.25) 0%, rgba(168,85,247,0.08) 60%, transparent 100%)',
           filter: 'blur(4px)',
         }} />
       </div>
 
-      {/* Overlay verdâtre */}
       <div className="absolute inset-0 pointer-events-none" style={{
         zIndex: 4,
-        background: 'radial-gradient(ellipse at 50% 80%, rgba(22,163,74,0.08) 0%, transparent 60%)',
+        background: 'radial-gradient(ellipse at 50% 80%, rgba(126,34,206,0.08) 0%, transparent 60%)',
       }} />
     </>
   )
 }
-
 
 // ─── Canvas Particles ─────────────────────────────────────────────────────────
 function ParticleCanvas({ color, count = 18, rarityKey }) {
@@ -840,23 +745,18 @@ function ParticleCanvas({ color, count = 18, rarityKey }) {
     const W = canvas.width = canvas.offsetWidth
     const H = canvas.height = canvas.offsetHeight
 
-    const isSecret  = rarityKey === 'SECRET'
-    const isShiny   = rarityKey === 'SHINY'
-    const isHolo    = rarityKey === 'RPEDIA VALIDATION'
-    const isSupreme = rarityKey === 'SUPREME'
-    const isAbyssal  = rarityKey === 'ABYSSAL'
-    const isAncestral    = rarityKey === 'ANCESTRAL'
-    const isCosmique = rarityKey === 'COSMIQUE'
-    const isNecrosis = rarityKey === 'NECROSIS'
+    const isSecret    = rarityKey === 'SECRET'
+    const isIcone     = rarityKey === 'ICONE'
+    const isLegend    = rarityKey === 'LEGENDAIRE'
 
     const particles = Array.from({ length: count }, () => ({
       x: Math.random() * W,
-      y: isSupreme ? Math.random() * H * 0.6 + H * 0.3 : Math.random() * H,
-      r: Math.random() * (isSupreme ? 1.5 : 2.5) + 0.5,
-      vx: (Math.random() - 0.5) * (isSupreme ? 0.3 : 0.4),
-      vy: isSupreme ? -(Math.random() * 0.8 + 0.3) : -Math.random() * 0.6 - 0.2,
+      y: isIcone ? Math.random() * H * 0.6 + H * 0.3 : Math.random() * H,
+      r: Math.random() * (isIcone ? 1.5 : 2.5) + 0.5,
+      vx: (Math.random() - 0.5) * (isIcone ? 0.3 : 0.4),
+      vy: isIcone ? -(Math.random() * 0.8 + 0.3) : -Math.random() * 0.6 - 0.2,
       alpha: Math.random(),
-      hue: isHolo ? Math.random() * 360 : isSupreme ? Math.random() * 30 : null,
+      hue: isSecret ? Math.random() * 360 : isIcone ? Math.random() * 30 : null,
     }))
 
     let raf
@@ -864,21 +764,13 @@ function ParticleCanvas({ color, count = 18, rarityKey }) {
       ctx.clearRect(0, 0, W, H)
 
       if (isSecret) {
+        // Lignes de glitch holo
         for (let i = 0; i < H; i += 4) {
           if (Math.random() > 0.97) {
             ctx.fillStyle = 'rgba(255,0,255,0.04)'
             ctx.fillRect(0, i, W, 2)
           }
         }
-      }
-      if (isShiny) {
-        const grad = ctx.createLinearGradient(0, 0, W, H)
-        const t = (Date.now() % 2000) / 2000
-        grad.addColorStop(Math.max(0, t - 0.1), 'transparent')
-        grad.addColorStop(t, 'rgba(150,240,255,0.12)')
-        grad.addColorStop(Math.min(1, t + 0.1), 'transparent')
-        ctx.fillStyle = grad
-        ctx.fillRect(0, 0, W, H)
       }
 
       particles.forEach(p => {
@@ -887,8 +779,7 @@ function ParticleCanvas({ color, count = 18, rarityKey }) {
         p.alpha += (Math.random() - 0.5) * 0.04
         p.alpha = Math.max(0.05, Math.min(1, p.alpha))
 
-        if (isSupreme) {
-          // Cendres rouges qui montent depuis les flammes bas
+        if (isIcone) {
           if (p.y < -5) { p.y = H * 0.9; p.x = Math.random() * W }
         } else {
           if (p.y < -5) { p.y = H + 5; p.x = Math.random() * W }
@@ -896,24 +787,18 @@ function ParticleCanvas({ color, count = 18, rarityKey }) {
         if (p.x < -5 || p.x > W + 5) p.x = Math.random() * W
 
         ctx.beginPath()
-        if (isHolo) {
+        if (isSecret) {
           p.hue = (p.hue + 0.5) % 360
           ctx.fillStyle = `hsla(${p.hue}, 100%, 70%, ${p.alpha})`
-        } else if (isSupreme) {
+        } else if (isIcone) {
           const hue = p.hue + Math.random() * 10
           ctx.fillStyle = `hsla(${hue}, 100%, ${40 + Math.random() * 20}%, ${p.alpha * 0.7})`
         } else {
           ctx.fillStyle = color + Math.floor(p.alpha * 255).toString(16).padStart(2, '0')
         }
 
-        if (rarityKey === 'LEGEND' || rarityKey === 'RPEDIA VALIDATION' || rarityKey === 'SUPREME') {
+        if (rarityKey === 'LEGENDAIRE' || rarityKey === 'ICONE') {
           drawStar(ctx, p.x, p.y, 4, p.r * 2, p.r)
-        } else if (isShiny) {
-          ctx.save()
-          ctx.translate(p.x, p.y)
-          ctx.rotate(Math.PI / 4)
-          ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 2)
-          ctx.restore()
         } else {
           ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
         }
@@ -1038,18 +923,26 @@ function Stars({ count, color }) {
 // ─── Main card ────────────────────────────────────────────────────────────────
 function CharacterCard({ character, onClick }) {
   const [hovered, setHovered] = useState(false)
-  const rarity = rarities[character.rarity] || rarities.NORMAL
-  const { color, bg, fullArt } = rarity
-  const rarityKey = character.rarity || 'NORMAL'
-  const isSupreme = rarityKey === 'SUPREME'
-  const isAbyssal  = rarityKey === 'ABYSSAL'
-  const isAncestral    = rarityKey === 'ANCESTRAL'
-  const isCosmique = rarityKey === 'COSMIQUE'
-  const isNecrosis = rarityKey === 'NECROSIS'
-  const isSpecial  = isSupreme || isAbyssal || isAncestral || isCosmique || isNecrosis
 
-  const hasParticles = ['EPIQUE','LEGEND','COUP DE COEUR','RPEDIA VALIDATION','SHINY','SECRET','SUPREME','ABYSSAL','COSMIQUE'].includes(rarityKey)
-  const particleCount = { EPIQUE: 12, LEGEND: 20, 'COUP DE COEUR': 18, 'RPEDIA VALIDATION': 25, SHINY: 15, SECRET: 20, SUPREME: 25, ABYSSAL: 18, COSMIQUE: 30 }[rarityKey] || 0
+  // Normalise les anciennes raretés supprimées
+  const rawRarity = character.rarity || 'NORMAL'
+  const rarityKey = rarities[rawRarity] ? rawRarity : 'NORMAL'
+
+  const rarity = rarities[rarityKey]
+  const { color, bg, fullArt } = rarity
+
+  const isIcone     = rarityKey === 'ICONE'
+  const isAncestral = rarityKey === 'ANCESTRAL'
+  const isLegend    = rarityKey === 'LEGENDAIRE'
+  const isSecret    = rarityKey === 'SECRET'
+  const isEpique    = rarityKey === 'EPIQUE'
+  const isSpecial   = isIcone || isAncestral || isLegend || isSecret || isEpique
+
+  const hasParticles = ['EPIQUE','LEGENDAIRE','SECRET','ICONE','ANCESTRAL'].includes(rarityKey)
+  const particleCount = {
+    ICONE: 25, ANCESTRAL: 20, LEGENDAIRE: 20,
+    SECRET: 20, EPIQUE: 12,
+  }[rarityKey] || 0
 
   const stats = [
     { label: 'RP',  value: character.stat_rp  ?? 'C' },
@@ -1060,12 +953,20 @@ function CharacterCard({ character, onClick }) {
 
   const imgSrc = character.image_url || 'https://static.vecteezy.com/ti/vecteur-libre/p1/35129568-silhouette-de-inconnue-la-personne-avec-visage-cache-couvert-et-masque-mysterieux-etrange-homme-anonyme-personnage-vecteur-illustration-isole-sur-blanc-contexte-gratuit-vectoriel.jpg'
 
+  const cardAnimClass =
+    hovered && isIcone     ? 'icone-card'     :
+    hovered && isAncestral ? 'ancestral-card' :
+    hovered && isLegend    ? 'legendaire-card':
+    hovered && isSecret    ? 'secret-card'    :
+    hovered && isEpique    ? 'epique-card'    :
+    ''
+
   return (
     <div
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`card-ratio relative flex flex-col rounded-2xl overflow-hidden cursor-pointer hover:scale-[1.03] transition-transform duration-200 ${hovered && isSupreme ? 'supreme-card' : hovered && isAbyssal ? 'abyssal-card' : hovered && isAncestral ? 'ancestral-card' : hovered && isCosmique ? 'cosmic-card' : hovered && isNecrosis ? 'necrosis-card' : ''}`}
+      className={`card-ratio relative flex flex-col rounded-2xl overflow-hidden cursor-pointer hover:scale-[1.03] transition-transform duration-200 ${cardAnimClass}`}
       style={{
         background: bg,
         border: `2px solid ${color}60`,
@@ -1076,16 +977,15 @@ function CharacterCard({ character, onClick }) {
         aspectRatio: '3/4',
       }}
     >
-      {rarityKey === 'VETERAN' && hovered && <VeteranBorder color={color} />}
-      {rarityKey === 'ELITE' && hovered && <ShimmerBorder color={color} />}
-      {rarityKey === 'LEGEND' && hovered && <PulseGlow color={color} />}
-      {rarityKey === 'RPEDIA VALIDATION' && hovered && <HoloBorder />}
-      {isSupreme && hovered && <SupremeEffects />}
-      {isAbyssal && hovered && <AbyssalEffects />}
-      {isAncestral && hovered && <AncestralEffects />}
-      {isCosmique && hovered && <CosmiqueEffects />}
-      {isNecrosis && hovered && <NecrosisEffects />}
-      {hasParticles && hovered && <ParticleCanvas color={color} count={particleCount} rarityKey={rarityKey} />}
+      {rarityKey === 'VETERAN'    && hovered && <VeteranBorder color={color} />}
+      {rarityKey === 'ELITE'      && hovered && <ShimmerBorder color={color} />}
+      {rarityKey === 'LEGENDAIRE' && hovered && <PulseGlow color={color} />}
+      {isIcone                    && hovered && <IconeEffects />}
+      {isAncestral                && hovered && <AncestralEffects />}
+      {isLegend                   && hovered && <LegendaireEffects />}
+      {isSecret                   && hovered && <SecretEffects />}
+      {isEpique                   && hovered && <EpiqueEffects />}
+      {hasParticles               && hovered && <ParticleCanvas color={color} count={particleCount} rarityKey={rarityKey} />}
 
       <PatternOverlay type={rarity.pattern} color={color} />
       <Stars count={rarity.stars} color={color} />
@@ -1096,18 +996,16 @@ function CharacterCard({ character, onClick }) {
           <div className="absolute inset-0" style={{ zIndex: 0 }}>
             <img src={imgSrc} alt={character.rp_name} loading="lazy" className="w-full h-full object-cover object-top" />
             <div className="absolute inset-0" style={{
-              background: isSupreme
+              background: isIcone
                 ? 'linear-gradient(to top, rgba(7,0,0,0.98) 0%, rgba(7,0,0,0.7) 38%, rgba(7,0,0,0.2) 65%, transparent 100%)'
-                : isAbyssal
-                ? 'linear-gradient(to top, rgba(0,10,20,0.98) 0%, rgba(0,10,20,0.65) 40%, rgba(0,10,20,0.15) 70%, transparent 100%)'
                 : isAncestral
                 ? 'linear-gradient(to top, rgba(10,8,0,0.95) 0%, rgba(10,8,0,0.5) 45%, rgba(10,8,0,0.1) 70%, transparent 100%)'
-                : isCosmique
-                ? 'linear-gradient(to top, rgba(2,0,8,0.98) 0%, rgba(2,0,8,0.65) 40%, rgba(2,0,8,0.15) 70%, transparent 100%)'
-                : isNecrosis
-                ? 'linear-gradient(to top, rgba(1,8,0,0.97) 0%, rgba(1,8,0,0.65) 40%, rgba(1,8,0,0.15) 70%, transparent 100%)'
-                : rarityKey === 'SECRET'
+                : isLegend
+                ? 'linear-gradient(to top, rgba(0,5,20,0.97) 0%, rgba(0,5,20,0.65) 40%, rgba(0,5,20,0.15) 70%, transparent 100%)'
+                : isSecret
                 ? 'linear-gradient(to top, rgba(5,0,5,0.95) 0%, rgba(5,0,5,0.5) 50%, rgba(5,0,5,0.1) 100%)'
+                : isEpique
+                ? 'linear-gradient(to top, rgba(10,0,18,0.97) 0%, rgba(10,0,18,0.65) 40%, rgba(10,0,18,0.15) 70%, transparent 100%)'
                 : `linear-gradient(to top, ${bg}f0 0%, ${bg}99 40%, ${bg}22 70%, transparent 100%)`
             }} />
           </div>
@@ -1115,18 +1013,18 @@ function CharacterCard({ character, onClick }) {
           {/* Barre top */}
           <div style={{
             height: 4, flexShrink: 0, zIndex: 10,
-            background: isSupreme
+            background: isIcone
               ? 'linear-gradient(to right, transparent, #FF0000, #FF4400, #FF0000, transparent)'
               : `linear-gradient(to right, transparent, ${color}, transparent)`
           }} />
 
           <div className="relative flex justify-between items-center px-3 pt-2 pb-1" style={{ zIndex: 10 }}>
             <span className="font-mono font-bold tracking-widest whitespace-nowrap" style={{
-              color: isSupreme ? '#FF2200' : color,
+              color: isIcone ? '#FF2200' : color,
               fontSize: '0.55rem',
-              textShadow: isSupreme ? '0 0 8px #FF0000' : 'none',
+              textShadow: isIcone ? '0 0 8px #FF0000' : 'none',
             }}>{rarity.label}</span>
-            {character.player && <span className="font-mono" style={{ color: isSupreme ? 'rgba(255,80,80,0.6)' : 'rgba(255,255,255,0.5)', fontSize: '0.55rem' }}>{character.player}</span>}
+            {character.player && <span className="font-mono" style={{ color: isIcone ? 'rgba(255,80,80,0.6)' : 'rgba(255,255,255,0.5)', fontSize: '0.55rem' }}>{character.player}</span>}
           </div>
 
           <div style={{ flex: '1 1 0', minHeight: 0, zIndex: 0 }} />
@@ -1135,18 +1033,18 @@ function CharacterCard({ character, onClick }) {
             <h2 className="font-bold tracking-widest uppercase leading-tight" style={{
               fontFamily: 'Bebas Neue, sans-serif',
               fontSize: '1.2rem',
-              color: isSupreme ? '#FF2200' : '#ffffff',
-              textShadow: isSupreme
+              color: isIcone ? '#FF2200' : '#ffffff',
+              textShadow: isIcone
                 ? '0 0 10px #FF0000, 0 0 30px #FF000088, 0 0 50px #FF000044'
                 : `0 0 20px ${color}`,
-              letterSpacing: isSupreme ? '0.12em' : undefined,
+              letterSpacing: isIcone ? '0.12em' : undefined,
             }}>{character.rp_name}</h2>
-            {character.surname && <p className="font-mono" style={{ color: isSupreme ? 'rgba(255,60,60,0.5)' : 'rgba(255,255,255,0.4)', fontSize: '0.6rem' }}>{character.surname}</p>}
+            {character.surname && <p className="font-mono" style={{ color: isIcone ? 'rgba(255,60,60,0.5)' : 'rgba(255,255,255,0.4)', fontSize: '0.6rem' }}>{character.surname}</p>}
           </div>
 
           <div className="mx-3 relative" style={{
             height: 1, zIndex: 10, flexShrink: 0,
-            background: isSupreme
+            background: isIcone
               ? 'linear-gradient(to right, transparent, #FF0000, transparent)'
               : `linear-gradient(to right, transparent, ${color}80, transparent)`
           }} />
@@ -1159,20 +1057,19 @@ function CharacterCard({ character, onClick }) {
                   color: rankColors[stat.value] || '#9CA3AF',
                   textShadow: `0 0 8px ${rankColors[stat.value]}88`,
                 }}>{stat.value}</span>
-                <span className="font-mono" style={{ color: isSupreme ? 'rgba(255,80,80,0.4)' : 'rgba(255,255,255,0.35)', fontSize: '0.55rem' }}>{stat.label}</span>
+                <span className="font-mono" style={{ color: isIcone ? 'rgba(255,80,80,0.4)' : 'rgba(255,255,255,0.35)', fontSize: '0.55rem' }}>{stat.label}</span>
               </div>
             ))}
           </div>
 
           <div className="relative px-3 pb-1 pt-1 flex items-center justify-between" style={{ zIndex: 10, flexShrink: 0 }}>
-            <span className="font-mono" style={{ color: isSupreme ? 'rgba(255,50,50,0.4)' : 'rgba(255,255,255,0.3)', fontSize: '0.55rem' }}>{character.server}</span>
-            <span className="font-mono" style={{ color: isSupreme ? 'rgba(255,50,50,0.4)' : 'rgba(255,255,255,0.3)', fontSize: '0.55rem' }}>♥ {character.likes_count ?? 0}</span>
+            <span className="font-mono" style={{ color: isIcone ? 'rgba(255,50,50,0.4)' : 'rgba(255,255,255,0.3)', fontSize: '0.55rem' }}>{character.server}</span>
+            <span className="font-mono" style={{ color: isIcone ? 'rgba(255,50,50,0.4)' : 'rgba(255,255,255,0.3)', fontSize: '0.55rem' }}>♥ {character.likes_count ?? 0}</span>
           </div>
 
-          {/* Barre bottom */}
           <div style={{
             height: 4, flexShrink: 0, zIndex: 10,
-            background: isSupreme
+            background: isIcone
               ? 'linear-gradient(to right, transparent, #FF0000, #FF4400, #FF0000, transparent)'
               : `linear-gradient(to right, transparent, ${color}, transparent)`
           }} />

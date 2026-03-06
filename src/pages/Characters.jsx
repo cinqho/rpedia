@@ -5,11 +5,17 @@ import CharacterModal from '../components/CharacterModal'
 
 const universes = ['Tous', 'Naruto', 'One Piece', 'Bleach', 'Dragon Ball', 'Autre']
 
+// Du plus commun au plus rare (ordre croissant de rareté)
 const RARITY_ORDER = [
-  'NORMAL', 'VETERAN', 'ELITE', 'EPIQUE', 'LEGEND',
-  'COUP DE COEUR', 'RPEDIA VALIDATION', 'SHINY', 'SECRET',
-  'NECROSIS', 'ABYSSAL', 'COSMIQUE', 'ANCESTRAL', 'SUPREME'
+  'NORMAL',
+  'VETERAN',
+  'ELITE',
+  'EPIQUE',
+  'LEGENDAIRE',
+  'ANCESTRAL',
+  'ICONE',
 ]
+// SECRET exclu volontairement : caché dans la liste publique
 
 function Characters() {
   const [characters, setCharacters] = useState([])
@@ -40,17 +46,25 @@ function Characters() {
 
   const servers = ['Tous', ...new Set(characters.map(c => c.server).filter(Boolean))]
 
-  let filtered = characters.filter(c => {
-    const matchSearch = c.rp_name.toLowerCase().includes(search.toLowerCase()) || (c.player && c.player.toLowerCase().includes(search.toLowerCase()))
-    const matchUniverse = universeFilter === 'Tous' || c.universe === universeFilter
-    const matchServer = serverFilter === '' || serverFilter === 'Tous' || c.server === serverFilter
-    return matchSearch && matchUniverse && matchServer
-  })
+  // Normalise les anciennes raretés supprimées vers NORMAL
+  function normalizeRarity(r) {
+    return RARITY_ORDER.includes(r) ? r : 'NORMAL'
+  }
+
+  let filtered = characters
+    // Masque les personnages SECRET de la liste publique
+    .filter(c => c.rarity !== 'SECRET')
+    .filter(c => {
+      const matchSearch = c.rp_name.toLowerCase().includes(search.toLowerCase()) || (c.player && c.player.toLowerCase().includes(search.toLowerCase()))
+      const matchUniverse = universeFilter === 'Tous' || c.universe === universeFilter
+      const matchServer = serverFilter === '' || serverFilter === 'Tous' || c.server === serverFilter
+      return matchSearch && matchUniverse && matchServer
+    })
 
   if (raritySort !== null) {
     filtered = [...filtered].sort((a, b) => {
-      const ri = RARITY_ORDER.indexOf(a.rarity || 'NORMAL')
-      const rj = RARITY_ORDER.indexOf(b.rarity || 'NORMAL')
+      const ri = RARITY_ORDER.indexOf(normalizeRarity(a.rarity))
+      const rj = RARITY_ORDER.indexOf(normalizeRarity(b.rarity))
       return raritySort === 'desc' ? rj - ri : ri - rj
     })
   }

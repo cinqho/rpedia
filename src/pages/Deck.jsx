@@ -4,11 +4,20 @@ import CharacterCard from '../components/CharacterCard'
 
 const TEAM_SIZE = 5
 
+// Du plus commun au plus rare (ordre croissant de rareté)
 const RARITY_ORDER = [
-  'NORMAL', 'VETERAN', 'ELITE', 'EPIQUE', 'LEGEND',
-  'COUP DE COEUR', 'SHINY', 'SECRET', 'RPEDIA VALIDATION',
-  'SUPREME', 'ABYSSAL', 'ANCESTRAL', 'COSMIQUE', 'NECROSIS'
+  'NORMAL',
+  'VETERAN',
+  'ELITE',
+  'EPIQUE',
+  'LEGENDAIRE',
+  'ANCESTRAL',
+  'ICONE',
 ]
+
+function normalizeRarity(r) {
+  return RARITY_ORDER.includes(r) ? r : 'NORMAL'
+}
 
 function Deck() {
   const [user, setUser] = useState(null)
@@ -110,8 +119,8 @@ function Deck() {
 
   if (raritySort !== null) {
     filtered = [...filtered].sort((a, b) => {
-      const ri = RARITY_ORDER.indexOf(a.characters_with_likes?.rarity || 'NORMAL')
-      const rj = RARITY_ORDER.indexOf(b.characters_with_likes?.rarity || 'NORMAL')
+      const ri = RARITY_ORDER.indexOf(normalizeRarity(a.characters_with_likes?.rarity))
+      const rj = RARITY_ORDER.indexOf(normalizeRarity(b.characters_with_likes?.rarity))
       return raritySort === 'desc' ? rj - ri : ri - rj
     })
   }
@@ -188,7 +197,6 @@ function Deck() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Bouton tri rareté */}
             <button
               onClick={cycleSort}
               className="px-3 py-2 rounded-xl font-mono text-xs font-bold tracking-wider transition-all duration-200 hover:opacity-90"
