@@ -17,7 +17,7 @@ export const rarities = {
   ELITE:     { label: '◆ ÉLITE',          color: '#38BDF8', bg: '#0c1a2e', pattern: null,        stars: 2, fullArt: false },
   EPIQUE:    { label: '✦ ÉPIQUE',         color: '#A855F7', bg: '#120a1a', pattern: 'dots',      stars: 3, fullArt: true  },
   SECRET:    { label: '◈ SECRET',         color: '#F472B6', bg: '#050005', pattern: 'dots',      stars: 4, fullArt: true  },
-  LEGENDAIRE:{ label: '★ LÉGENDAIRE',     color: '#fbc059', bg: '#0a0e1a', pattern: 'triangles', stars: 5, fullArt: true  },
+  LEGENDAIRE:{ label: '★ LÉGENDAIRE',     color: '#0205bf', bg: '#00010f', pattern: 'triangles', stars: 5, fullArt: true  },
   ANCESTRAL: { label: '✦ ANCESTRAL',      color: '#FFF9C4', bg: '#0a0800', pattern: null,        stars: 0, fullArt: true  },
   ICONE:     { label: '👁 ICÔNE',          color: '#FF1A1A', bg: '#070000', pattern: null,        stars: 0, fullArt: true  },
 }
@@ -25,8 +25,8 @@ export const rarities = {
 export const RARITY_WEIGHTS = [
   { rarity: 'ICONE',      weight: 0.05  },
   { rarity: 'ANCESTRAL',  weight: 0.07  },
-  { rarity: 'LEGENDAIRE', weight: 2.83  },
-  { rarity: 'SECRET',     weight: 2     },
+  { rarity: 'LEGENDAIRE', weight: 3.83  },
+  { rarity: 'SECRET',     weight: 1     },
   { rarity: 'EPIQUE',     weight: 10.05 },
   { rarity: 'ELITE',      weight: 15    },
   { rarity: 'VETERAN',    weight: 25    },
@@ -410,11 +410,11 @@ function AncestralEffects() {
   )
 }
 
-// ─── LEGENDAIRE effects (= Cosmique avec teintes or/bleu marine) ──────────────
+// ─── LEGENDAIRE effects — bleu électrique #0205bf ─────────────────────────────
 const LEGENDAIRE_STYLES = `
   @keyframes legendairePulse {
-    0%,100% { box-shadow: 0 0 20px #fbc059aa, 0 0 50px #1a2a6c33; }
-    50%     { box-shadow: 0 0 50px #fbc059ff, 0 0 100px #1a2a6c66, 0 0 180px #fbc05922; }
+    0%,100% { box-shadow: 0 0 20px #0205bfaa, 0 0 50px #0205bf33; }
+    50%     { box-shadow: 0 0 60px #0205bfff, 0 0 120px #0205bf66, 0 0 200px #0205bf22; }
   }
   @keyframes legendNebulaShift {
     0%   { transform: translate(0,0) scale(1); }
@@ -432,10 +432,24 @@ const LEGENDAIRE_STYLES = `
     100% { transform: translateX(80px) translateY(80px); opacity: 0; }
   }
   @keyframes legendWarpRing {
-    0%   { transform: scale(0.8) rotate(0deg); opacity: 0.6; }
-    100% { transform: scale(1.4) rotate(180deg); opacity: 0; }
+    0%   { transform: translate(-50%,-50%) scale(0.8) rotate(0deg); opacity: 0.7; }
+    100% { transform: translate(-50%,-50%) scale(1.5) rotate(180deg); opacity: 0; }
   }
-  .legendaire-card     { animation: legendairePulse 3s ease-in-out infinite; }
+  @keyframes legendElecFlicker {
+    0%,100% { opacity: 1; }
+    92% { opacity: 0.4; }
+    94% { opacity: 1; }
+    96% { opacity: 0.6; }
+    98% { opacity: 1; }
+  }
+  @keyframes legendLightning {
+    0%,85%,100% { opacity: 0; }
+    88% { opacity: 0.9; }
+    92% { opacity: 0.3; }
+    95% { opacity: 0.7; }
+  }
+  .legendaire-card     { animation: legendairePulse 2.5s ease-in-out infinite; }
+  .legend-elec-border  { animation: legendElecFlicker 4s ease-in-out infinite; }
   .legend-nebula-shift { animation: legendNebulaShift 8s ease-in-out infinite; }
   .legend-star-1  { animation: legendStarTwinkle 1.8s ease-in-out infinite 0.0s; }
   .legend-star-2  { animation: legendStarTwinkle 2.4s ease-in-out infinite 0.5s; }
@@ -447,14 +461,14 @@ const LEGENDAIRE_STYLES = `
   .legend-star-8  { animation: legendStarTwinkle 1.9s ease-in-out infinite 1.2s; }
   .legend-shoot-1 { animation: legendShootingStar 3.5s ease-in infinite 0.5s; }
   .legend-shoot-2 { animation: legendShootingStar 5s ease-in infinite 2.5s; }
-  .legend-warp    { animation: legendWarpRing 4s ease-out infinite; }
+  .legend-warp-1  { animation: legendWarpRing 3s ease-out infinite 0.0s; }
+  .legend-warp-2  { animation: legendWarpRing 3s ease-out infinite 1.0s; }
+  .legend-warp-3  { animation: legendWarpRing 3s ease-out infinite 2.0s; }
+  .legend-lightning { animation: legendLightning 5s ease-in-out infinite; }
 `
 
 function LegendaireEffects() {
-  // Couleurs or + bleu marine
-  const goldStar = '#fbc059'
-  const navyStar = '#1a4a8a'
-  const starColors = [goldStar, navyStar, goldStar, navyStar, goldStar, navyStar, goldStar, navyStar]
+  const starColors = ['#0205bf','#3b5bff','#0205bf','#6b7fff','#3b5bff','#0205bf','#6b7fff','#3b5bff']
   const starClasses = ['legend-star-1','legend-star-2','legend-star-3','legend-star-4','legend-star-5','legend-star-6','legend-star-7','legend-star-8']
   const starPositions = [
     { top: '8%',  left: '15%' }, { top: '15%', left: '70%' },
@@ -468,36 +482,56 @@ function LegendaireEffects() {
     <>
       <style>{LEGENDAIRE_STYLES}</style>
 
-      {/* Nébuleuse or/bleu */}
+      {/* Bordure électrique flickering */}
+      <div className="legend-elec-border absolute inset-0 pointer-events-none" style={{
+        zIndex: 20, borderRadius: 16,
+        border: '2px solid #0205bf',
+        boxShadow: '0 0 12px #0205bf88, inset 0 0 8px #0205bf22',
+      }} />
+
+      {/* Nébuleuse bleu électrique */}
       <div className="legend-nebula-shift absolute inset-0 pointer-events-none" style={{ zIndex: 2 }}>
         <div style={{
-          position: 'absolute', top: '10%', left: '20%', width: '70%', height: '60%',
-          background: 'radial-gradient(ellipse, #1a2a6c22 0%, #fbc05911 40%, transparent 70%)',
-          filter: 'blur(12px)', borderRadius: '50%',
+          position: 'absolute', top: '5%', left: '15%', width: '75%', height: '55%',
+          background: 'radial-gradient(ellipse, #0205bf28 0%, #3b5bff11 50%, transparent 75%)',
+          filter: 'blur(14px)', borderRadius: '50%',
         }} />
         <div style={{
-          position: 'absolute', top: '30%', left: '5%', width: '50%', height: '40%',
-          background: 'radial-gradient(ellipse, #fbc05918 0%, #b8860b11 40%, transparent 70%)',
+          position: 'absolute', top: '35%', left: '0%', width: '55%', height: '45%',
+          background: 'radial-gradient(ellipse, #0205bf18 0%, transparent 70%)',
           filter: 'blur(10px)', borderRadius: '50%',
         }} />
         <div style={{
-          position: 'absolute', top: '15%', right: '5%', width: '45%', height: '35%',
-          background: 'radial-gradient(ellipse, #1a2a6c22 0%, transparent 70%)',
+          position: 'absolute', top: '20%', right: '0%', width: '50%', height: '40%',
+          background: 'radial-gradient(ellipse, #3b5bff1a 0%, transparent 70%)',
           filter: 'blur(8px)', borderRadius: '50%',
         }} />
       </div>
 
-      {/* Étoiles scintillantes or/bleu */}
+      {/* Éclairs SVG */}
+      <div className="legend-lightning absolute inset-0 pointer-events-none" style={{ zIndex: 9 }}>
+        <svg width="100%" height="100%" viewBox="0 0 100 133" preserveAspectRatio="none">
+          <path d="M20,0 L15,30 L22,30 L10,70 L18,70 L5,110" stroke="#3b5bff" strokeWidth="0.6" fill="none" strokeLinecap="round" opacity="0.8"/>
+          <path d="M75,10 L80,35 L73,35 L85,65 L78,65 L90,95" stroke="#6b7fff" strokeWidth="0.4" fill="none" strokeLinecap="round" opacity="0.6"/>
+          <path d="M50,0 L48,20 L52,20 L46,50" stroke="#0205bf" strokeWidth="0.5" fill="none" strokeLinecap="round" opacity="0.7"/>
+          <circle cx="22" cy="30" r="1.5" fill="#3b5bff" opacity="0.9"/>
+          <circle cx="18" cy="70" r="2" fill="#0205bf" opacity="0.8"/>
+          <circle cx="78" cy="65" r="1.5" fill="#6b7fff" opacity="0.7"/>
+          <circle cx="52" cy="20" r="1" fill="#3b5bff" opacity="0.9"/>
+        </svg>
+      </div>
+
+      {/* Étoiles scintillantes bleues */}
       {starPositions.map((s, i) => (
         <div key={i} className={`absolute pointer-events-none ${starClasses[i]}`} style={{
           top: s.top, left: s.left, zIndex: 8,
           width: starSizes[i], height: starSizes[i], borderRadius: '50%',
           background: starColors[i],
-          boxShadow: `0 0 ${starSizes[i] * 2}px ${starColors[i]}, 0 0 ${starSizes[i] * 4}px ${starColors[i]}55`,
+          boxShadow: `0 0 ${starSizes[i] * 2}px ${starColors[i]}, 0 0 ${starSizes[i] * 5}px ${starColors[i]}66`,
         }} />
       ))}
 
-      {/* Étoiles filantes */}
+      {/* Étoiles filantes bleues */}
       {[
         { top: '10%', left: '5%',  cls: 'legend-shoot-1' },
         { top: '30%', left: '20%', cls: 'legend-shoot-2' },
@@ -505,24 +539,35 @@ function LegendaireEffects() {
         <div key={i} className={`absolute pointer-events-none ${s.cls}`} style={{
           top: s.top, left: s.left, zIndex: 9,
           width: 40, height: 1.5,
-          background: 'linear-gradient(to right, transparent, #fbc059, #fff8dc)',
+          background: 'linear-gradient(to right, transparent, #3b5bff, #aab4ff)',
           borderRadius: 2, filter: 'blur(0.5px)', transform: 'rotate(35deg)',
         }} />
       ))}
 
-      {/* Anneau warp doré */}
-      <div className="legend-warp absolute pointer-events-none" style={{
-        zIndex: 7, top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-        width: 80, height: 40,
-        border: '1px solid rgba(251,192,89,0.4)',
-        borderRadius: '50%',
-        boxShadow: '0 0 10px #fbc05944',
-      }} />
+      {/* Anneaux warp concentriques */}
+      {['legend-warp-1','legend-warp-2','legend-warp-3'].map((cls, i) => (
+        <div key={i} className={`${cls} absolute pointer-events-none`} style={{
+          zIndex: 7, top: '50%', left: '50%',
+          width: 70 + i * 18, height: 35 + i * 9,
+          border: `1px solid rgba(2,5,191,${0.55 - i * 0.12})`,
+          borderRadius: '50%',
+          boxShadow: `0 0 ${8 + i * 4}px #0205bf${i === 0 ? '55' : '22'}`,
+        }} />
+      ))}
 
-      {/* Overlay sombre bleu marine */}
+      {/* Glow bleu bas */}
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ height: '25%', zIndex: 6 }}>
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: '100%',
+          background: 'linear-gradient(to top, rgba(2,5,191,0.2) 0%, transparent 100%)',
+          filter: 'blur(6px)',
+        }} />
+      </div>
+
+      {/* Vignette sombre */}
       <div className="absolute inset-0 pointer-events-none" style={{
         zIndex: 3,
-        background: 'radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,5,20,0.55) 100%)',
+        background: 'radial-gradient(ellipse at 50% 50%, transparent 25%, rgba(0,0,15,0.6) 100%)',
       }} />
     </>
   )
@@ -1001,7 +1046,7 @@ function CharacterCard({ character, onClick }) {
                 : isAncestral
                 ? 'linear-gradient(to top, rgba(10,8,0,0.95) 0%, rgba(10,8,0,0.5) 45%, rgba(10,8,0,0.1) 70%, transparent 100%)'
                 : isLegend
-                ? 'linear-gradient(to top, rgba(0,5,20,0.97) 0%, rgba(0,5,20,0.65) 40%, rgba(0,5,20,0.15) 70%, transparent 100%)'
+                ? 'linear-gradient(to top, rgba(0,1,15,0.97) 0%, rgba(0,1,15,0.65) 40%, rgba(0,1,15,0.15) 70%, transparent 100%)'
                 : isSecret
                 ? 'linear-gradient(to top, rgba(5,0,5,0.95) 0%, rgba(5,0,5,0.5) 50%, rgba(5,0,5,0.1) 100%)'
                 : isEpique

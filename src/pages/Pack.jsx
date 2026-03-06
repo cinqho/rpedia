@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 import CharacterCard, { rollRarity, rarities, RARITY_WEIGHTS } from '../components/CharacterCard'
 
-// 🔧 MAINTENANCE — mettre à false pour réactiver les packs
-const PACKS_DISABLED = true
+// 🔧 MAINTENANCE — mettre à true pour désactiver les packs
+const PACKS_DISABLED = false
 
 function DropRates() {
   const [open, setOpen] = useState(false)
-  
+
   const totalWeight = RARITY_WEIGHTS.reduce((sum, r) => sum + r.weight, 0)
 
   return (
@@ -136,8 +136,11 @@ function Pack() {
       return alert("Pas de personnages disponibles !")
     }
 
+    // Exclut les SECRET du pool de tirage (non disponibles en pack)
+    const availableChars = allChars.filter(c => c.rarity !== 'SECRET')
+
     const byRarity = {}
-    allChars.forEach(c => {
+    availableChars.forEach(c => {
       const r = c.rarity || 'NORMAL'
       if (!byRarity[r]) byRarity[r] = []
       byRarity[r].push(c)
@@ -150,10 +153,13 @@ function Pack() {
       while (!chosen && attempts < 50) {
         attempts++
         const rolledRarity = rollRarity()
+        // Ignore SECRET dans le roll (on reroll si ça tombe dessus)
+        if (rolledRarity === 'SECRET') continue
         const pool = byRarity[rolledRarity] || []
         if (pool.length > 0) chosen = pool[Math.floor(Math.random() * pool.length)]
       }
-      if (!chosen) chosen = allChars[Math.floor(Math.random() * allChars.length)]
+      // Fallback : pioche dans n'importe quelle rareté dispo (hors SECRET)
+      if (!chosen) chosen = availableChars[Math.floor(Math.random() * availableChars.length)]
       picked.push(chosen)
     }
 
@@ -179,7 +185,11 @@ function Pack() {
     setLoading(false)
   }
 
-  if (!user) return <div className="p-8 text-center text-white/40 font-mono text-sm">Connecte-toi pour ouvrir des packs.</div>
+  if (!user) return (
+    <div className="p-8 text-center text-white/40 font-mono text-sm">
+      Connecte-toi pour ouvrir des packs.
+    </div>
+  )
 
   // 🔧 PAGE DE MAINTENANCE
   if (PACKS_DISABLED) {
@@ -224,11 +234,18 @@ function Pack() {
         <>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mb-8">
             <Booster server="general" selected={selectedServer === 'general'} onClick={() => setSelectedServer('general')} disabled={resources?.packs_available <= 0} />
-            {servers.map(s => <Booster key={s} server={s} selected={selectedServer === s} onClick={() => setSelectedServer(s)} disabled={resources?.packs_available <= 0} />)}
+            {servers.map(s => (
+              <Booster key={s} server={s} selected={selectedServer === s} onClick={() => setSelectedServer(s)} disabled={resources?.packs_available <= 0} />
+            ))}
           </div>
           <div className="flex flex-col items-center">
             {selectedServer && (
-              <button onClick={openPack} className="px-12 py-4 rounded-2xl font-mono font-bold uppercase text-sm bg-[#fbc059] text-black">
+              <button
+                onClick={openPack}
+                disabled={loading}
+                className="px-12 py-4 rounded-2xl font-mono font-bold uppercase text-sm transition-all duration-200 hover:opacity-90 disabled:opacity-50"
+                style={{ background: '#fbc059', color: '#0a0a0a' }}
+              >
                 {loading ? 'Ouverture...' : `Ouvrir pack ${selectedServer}`}
               </button>
             )}
@@ -241,13 +258,19 @@ function Pack() {
         <div className="flex flex-col items-center gap-8 py-10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl">
             {cards.map((card, i) => (
-              <div key={i} style={{ opacity: revealedCards.includes(i) ? 1 : 0, transition: 'all 0.5s ease' }}>
+              <div key={i} style={{ opacity: revealedCards.includes(i) ? 1 : 0, transform: revealedCards.includes(i) ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(10px)', transition: 'all 0.5s ease' }}>
                 <CharacterCard character={card} />
               </div>
             ))}
           </div>
           {phase === 'done' && (
-            <button onClick={() => { setPhase('idle'); setCards([]); setSelectedServer(null) }} className="px-8 py-3 rounded-xl font-mono text-xs border border-white/10 text-white/40">RETOUR</button>
+            <button
+              onClick={() => { setPhase('idle'); setCards([]); setSelectedServer(null) }}
+              className="px-8 py-3 rounded-xl font-mono text-xs transition-all hover:opacity-80"
+              style={{ border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }}
+            >
+              RETOUR
+            </button>
           )}
         </div>
       )}

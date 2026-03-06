@@ -30,7 +30,7 @@ const rarityColors = {
   ELITE:      '#38BDF8',
   EPIQUE:     '#A855F7',
   SECRET:     '#F472B6',
-  LEGENDAIRE: '#fbc059',
+  LEGENDAIRE: '#0205bf',
   ANCESTRAL:  '#FFF9C4',
   ICONE:      '#FF1A1A',
 }
