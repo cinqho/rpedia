@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 import CharacterCard, { rollRarity, rarities, RARITY_WEIGHTS } from '../components/CharacterCard'
 
+// 🔧 MAINTENANCE — mettre à false pour réactiver les packs
+const PACKS_DISABLED = true
+
 function DropRates() {
   const [open, setOpen] = useState(false)
   
-  // Calcul du total des poids pour obtenir les vrais pourcentages
   const totalWeight = RARITY_WEIGHTS.reduce((sum, r) => sum + r.weight, 0)
 
   return (
@@ -24,28 +26,16 @@ function DropRates() {
           <div className="flex flex-col gap-3">
             {RARITY_WEIGHTS.map(({ rarity, weight }) => {
               const r = rarities[rarity]
-              // Calcul du vrai pourcentage
               const percentage = ((weight / totalWeight) * 100).toFixed(weight < 1 ? 2 : 1)
-              // Largeur de la barre proportionnelle au pourcentage (min 2% pour la visibilité)
               const barWidth = Math.max(2, (weight / totalWeight) * 100)
-              
               return (
                 <div key={rarity} className="flex items-center gap-3">
                   <span className="font-mono text-[10px] w-36 flex-shrink-0 truncate" style={{ color: r?.color || '#9CA3AF' }}>
                     {r?.label || rarity}
                   </span>
-                  
                   <div className="flex-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                    <div 
-                      className="h-full rounded-full transition-all duration-500" 
-                      style={{ 
-                        width: `${barWidth}%`, 
-                        background: r?.color || '#9CA3AF', 
-                        opacity: 0.7 
-                      }} 
-                    />
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${barWidth}%`, background: r?.color || '#9CA3AF', opacity: 0.7 }} />
                   </div>
-
                   <span className="font-mono text-[10px] w-12 text-right flex-shrink-0" style={{ color: 'rgba(255,255,255,0.5)' }}>
                     {percentage}%
                   </span>
@@ -191,9 +181,30 @@ function Pack() {
 
   if (!user) return <div className="p-8 text-center text-white/40 font-mono text-sm">Connecte-toi pour ouvrir des packs.</div>
 
+  // 🔧 PAGE DE MAINTENANCE
+  if (PACKS_DISABLED) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center" style={{ minHeight: '60vh' }}>
+        <div className="text-center max-w-md">
+          <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🔧</div>
+          <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '2.5rem', color: '#fbc059', letterSpacing: '0.05em' }}>
+            MAINTENANCE
+          </h1>
+          <p className="font-mono text-sm mt-3" style={{ color: 'rgba(255,255,255,0.4)', lineHeight: 1.8 }}>
+            Les packs sont temporairement désactivés.<br />
+            Une mise à jour des raretés est en cours.<br />
+            Reviens très bientôt !
+          </p>
+          <div className="mt-6 px-4 py-2 rounded-xl font-mono text-xs" style={{ background: 'rgba(251,192,89,0.06)', border: '1px solid rgba(251,192,89,0.15)', color: 'rgba(251,192,89,0.5)' }}>
+            Tes packs actuels sont conservés et ne seront pas perdus.
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="p-8">
-      {/* Header */}
       <div className="mb-8 flex items-start justify-between">
         <div>
           <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '3rem', color: '#ffffff' }}>
@@ -215,7 +226,6 @@ function Pack() {
             <Booster server="general" selected={selectedServer === 'general'} onClick={() => setSelectedServer('general')} disabled={resources?.packs_available <= 0} />
             {servers.map(s => <Booster key={s} server={s} selected={selectedServer === s} onClick={() => setSelectedServer(s)} disabled={resources?.packs_available <= 0} />)}
           </div>
-
           <div className="flex flex-col items-center">
             {selectedServer && (
               <button onClick={openPack} className="px-12 py-4 rounded-2xl font-mono font-bold uppercase text-sm bg-[#fbc059] text-black">

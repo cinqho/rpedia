@@ -19,9 +19,9 @@ export const rarities = {
 
 export const RARITY_WEIGHTS = [
   { rarity: 'SUPREME',           weight: 0.05 },
-  { rarity: 'ABYSSAL',           weight: 0.08 },
-  { rarity: 'ANCESTRAL',             weight: 0.07 },
-  { rarity: 'COSMIQUE',          weight: 0.06 },
+  { rarity: 'ANCESTRAL',         weight: 0.06 },
+  { rarity: 'ABYSSAL',           weight: 0.07 },
+  { rarity: 'COSMIQUE',          weight: 0.08 },
   { rarity: 'NECROSIS',          weight: 0.09 },
   { rarity: 'SECRET',            weight: 0.1  },
   { rarity: 'SHINY',             weight: 0.4  },
