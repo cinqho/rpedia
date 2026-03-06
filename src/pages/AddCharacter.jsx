@@ -301,6 +301,11 @@ function AddCharacter() {
             <div>
               <label style={labelStyle}>URL Image</label>
               <input name="image_url" value={form.image_url} onChange={handleChange} placeholder="https://..." style={inputStyle} />
+              <p className="font-mono text-xs mt-2" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                💡 Upload ton image sur{' '}
+                <a href="https://imgur.com/upload" target="_blank" rel="noreferrer" style={{ color: '#fbc059', textDecoration: 'underline' }}>imgur.com</a>
+                {' '}puis fais clic droit → "Copier l'adresse de l'image" et colle-la ici.
+              </p>
             </div>
 
             <div>
