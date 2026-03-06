@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabase'
 import { LeftShape, RightShape } from '../components/FormShapes'
 import { useLocation } from 'react-router-dom'
 
 const universes = ['Naruto', 'One Piece', 'Bleach', 'Dragon Ball', 'Autre']
 
-// Mise à jour des options avec les variantes + et -
 const statOptions = [
   { value: 'S+', label: 'S+ — Divin' },
   { value: 'S',  label: 'S — Légendaire' },
@@ -62,6 +61,10 @@ function AddCharacter() {
   const [servers, setServers] = useState([])
   const [customServer, setCustomServer] = useState(false)
 
+  // Vérification nom existant
+  const [nameStatus, setNameStatus] = useState(null) // null | 'checking' | 'taken' | 'free'
+  const debounceRef = useRef(null)
+
   useEffect(() => {
     setSuccess(false)
     setPendingCount(0)
@@ -92,7 +95,24 @@ function AddCharacter() {
   }
 
   function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+    setForm({ ...form, [name]: value })
+
+    if (name === 'rp_name') {
+      setNameStatus(null)
+      clearTimeout(debounceRef.current)
+      if (value.trim().length < 2) return
+      setNameStatus('checking')
+      debounceRef.current = setTimeout(async () => {
+        const { data } = await supabase
+          .from('characters')
+          .select('id')
+          .ilike('rp_name', value.trim())
+          .in('status', ['approved', 'pending'])
+          .limit(1)
+        setNameStatus(data && data.length > 0 ? 'taken' : 'free')
+      }, 500)
+    }
   }
 
   function handleServerSelect(e) {
@@ -111,6 +131,7 @@ function AddCharacter() {
     if (!accepted) return setError("Tu dois accepter la modération.")
     if (!form.rp_name || !form.universe || !form.server.trim()) return setError("Nom RP, univers et serveur sont obligatoires.")
     if (pendingCount >= 5) return setError("Tu as déjà 5 suggestions en attente. Attends qu'elles soient traitées.")
+    if (nameStatus === 'taken') return setError("Ce nom RP existe déjà dans la base.")
 
     setLoading(true)
     setError(null)
@@ -190,9 +211,38 @@ function AddCharacter() {
         ) : (
           <div className="flex flex-col gap-5">
 
+            {/* Nom RP avec vérification */}
             <div>
               <label style={labelStyle}>Nom RP *</label>
-              <input name="rp_name" value={form.rp_name} onChange={handleChange} placeholder="ex: Sasuke Uchiha" style={inputStyle} />
+              <div style={{ position: 'relative' }}>
+                <input
+                  name="rp_name"
+                  value={form.rp_name}
+                  onChange={handleChange}
+                  placeholder="ex: Sasuke Uchiha"
+                  style={{
+                    ...inputStyle,
+                    borderColor: nameStatus === 'taken' ? '#FF2D55' : nameStatus === 'free' ? '#34D399' : 'rgba(255,255,255,0.12)',
+                    paddingRight: '40px',
+                  }}
+                />
+                {/* Indicateur statut */}
+                <div style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.8rem' }}>
+                  {nameStatus === 'checking' && <span style={{ color: 'rgba(255,255,255,0.3)' }}>···</span>}
+                  {nameStatus === 'free'     && <span style={{ color: '#34D399' }}>✓</span>}
+                  {nameStatus === 'taken'    && <span style={{ color: '#FF2D55' }}>✗</span>}
+                </div>
+              </div>
+              {nameStatus === 'taken' && (
+                <p className="font-mono text-xs mt-2" style={{ color: '#FF2D55' }}>
+                  Ce nom RP existe déjà dans la base de données.
+                </p>
+              )}
+              {nameStatus === 'free' && (
+                <p className="font-mono text-xs mt-2" style={{ color: '#34D399' }}>
+                  Nom disponible.
+                </p>
+              )}
             </div>
 
             <div>
@@ -208,7 +258,6 @@ function AddCharacter() {
               </select>
             </div>
 
-            {/* Serveur */}
             <div>
               <label style={labelStyle}>Serveur *</label>
               <select
@@ -292,7 +341,7 @@ function AddCharacter() {
 
             <button
               onClick={handleSubmit}
-              disabled={loading}
+              disabled={loading || nameStatus === 'taken' || nameStatus === 'checking'}
               className="w-full py-4 rounded-xl font-mono text-sm font-bold tracking-widest uppercase transition-all duration-200 hover:opacity-90 disabled:opacity-50"
               style={{ background: '#fbc059', color: '#0a0a0a' }}
             >
