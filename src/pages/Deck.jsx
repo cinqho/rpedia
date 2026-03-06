@@ -6,8 +6,8 @@ const TEAM_SIZE = 5
 
 const RARITY_ORDER = [
   'NORMAL', 'VETERAN', 'ELITE', 'EPIQUE', 'LEGEND',
-  'COUP DE COEUR', 'RPEDIA VALIDATION', 'SHINY', 'SECRET',
-  'NECROSIS', 'ABYSSAL', 'COSMIQUE', 'ANCESTRAL', 'SUPREME'
+  'COUP DE COEUR', 'SHINY', 'SECRET', 'RPEDIA VALIDATION',
+  'SUPREME', 'ABYSSAL', 'ANCESTRAL', 'COSMIQUE', 'NECROSIS'
 ]
 
 function Deck() {
@@ -43,7 +43,7 @@ function Deck() {
         .eq('user_id', userId),
     ])
 
-    setDeck(deckData || [])
+    setDeck((deckData || []).filter(e => e.characters_with_likes !== null))
 
     const teamArr = Array(TEAM_SIZE).fill(null)
     for (const entry of teamData || []) {
@@ -242,6 +242,7 @@ function Deck() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {filtered.map(entry => {
               const character = entry.characters_with_likes
+              if (!character) return null
               const inTeam = team.some(c => c?.id === character?.id)
               return (
                 <div key={entry.character_id} className="relative cursor-pointer group" onClick={() => toggleTeam(character)}>
