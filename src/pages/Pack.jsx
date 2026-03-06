@@ -123,57 +123,27 @@ function Pack() {
     if (!user || !resources || resources.packs_available <= 0 || !selectedServer) return
     setLoading(true)
 
-    const { data: deckData } = await supabase.from('deck').select('character_id').eq('user_id', user.id)
-    const ownedIds = deckData?.map(d => d.character_id) || []
-
-    let query = supabase.from('characters_with_likes').select('*').eq('status', 'approved')
-    if (selectedServer !== 'general') query = query.eq('server', selectedServer)
-
-    const { data: allChars } = await query
-
-    if (!allChars || allChars.length < 1) {
-      setLoading(false)
-      return alert("Pas de personnages disponibles !")
-    }
-
-    // Exclut les SECRET du pool de tirage (non disponibles en pack)
-    const availableChars = allChars.filter(c => c.rarity !== 'SECRET')
-
-    const byRarity = {}
-    availableChars.forEach(c => {
-      const r = c.rarity || 'NORMAL'
-      if (!byRarity[r]) byRarity[r] = []
-      byRarity[r].push(c)
+    // ── Appel unique et atomique via la fonction SQL ──────────────────────────
+    // Une seule requête au lieu de 5-6 : pas de race condition, pas de surcharge
+    const { data, error } = await supabase.rpc('open_pack', {
+      p_user_id: user.id,
+      p_server:  selectedServer,
     })
 
-    const picked = []
-    for (let i = 0; i < 3; i++) {
-      let chosen = null
-      let attempts = 0
-      while (!chosen && attempts < 50) {
-        attempts++
-        const rolledRarity = rollRarity()
-        // Ignore SECRET dans le roll (on reroll si ça tombe dessus)
-        if (rolledRarity === 'SECRET') continue
-        const pool = byRarity[rolledRarity] || []
-        if (pool.length > 0) chosen = pool[Math.floor(Math.random() * pool.length)]
-      }
-      // Fallback : pioche dans n'importe quelle rareté dispo (hors SECRET)
-      if (!chosen) chosen = availableChars[Math.floor(Math.random() * availableChars.length)]
-      picked.push(chosen)
+    if (error || data?.error) {
+      setLoading(false)
+      const msg = data?.message || error?.message || 'Erreur inconnue'
+      if (data?.error === 'no_packs')      return alert('Tu n\'as plus de packs !')
+      if (data?.error === 'no_characters') return alert('Aucun personnage disponible sur ce serveur.')
+      return alert(`Erreur : ${msg}`)
     }
 
-    for (const card of picked) {
-      await supabase.from('deck').upsert(
-        { user_id: user.id, character_id: card.id },
-        { onConflict: 'user_id,character_id', ignoreDuplicates: true }
-      )
-    }
-    await supabase.from('resources').update({ packs_available: resources.packs_available - 1 }).eq('user_id', user.id)
+    const picked = data.cards
+    const packsRemaining = data.packs_remaining
 
     setCards(picked)
     setRevealedCards([])
-    setResources(prev => ({ ...prev, packs_available: prev.packs_available - 1 }))
+    setResources(prev => ({ ...prev, packs_available: packsRemaining }))
     setPhase('opening')
 
     picked.forEach((_, i) => {
