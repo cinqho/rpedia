@@ -15,7 +15,8 @@ function normalizeRarity(r) {
 
 function Deck() {
   const [user, setUser] = useState(null)
-  const [deck, setDeck] = useState([])
+  const [deck, setDeck] = useState([])         // toutes les lignes brutes
+  const [grouped, setGrouped] = useState([])   // dédupliqué avec count
   const [team, setTeam] = useState(Array(TEAM_SIZE).fill(null))
   const [loading, setLoading] = useState(true)
   const [savingSlot, setSavingSlot] = useState(null)
@@ -33,6 +34,20 @@ function Deck() {
     })
   }, [])
 
+  // Grouper les entrées deck par character_id
+  function buildGrouped(deckData) {
+    const map = {}
+    for (const entry of deckData) {
+      const id = entry.character_id
+      if (!map[id]) {
+        map[id] = { ...entry, count: 1 }
+      } else {
+        map[id].count += 1
+      }
+    }
+    return Object.values(map)
+  }
+
   async function fetchAll(userId) {
     setLoading(true)
     const [{ data: deckData }, { data: teamData }] = await Promise.all([
@@ -47,7 +62,9 @@ function Deck() {
         .eq('user_id', userId),
     ])
 
-    setDeck((deckData || []).filter(e => e.characters_with_likes !== null))
+    const cleaned = (deckData || []).filter(e => e.characters_with_likes !== null)
+    setDeck(cleaned)
+    setGrouped(buildGrouped(cleaned))
 
     const teamArr = Array(TEAM_SIZE).fill(null)
     for (const entry of teamData || []) {
@@ -111,8 +128,11 @@ function Deck() {
   )
 
   const teamCount = team.filter(Boolean).length
+  const uniqueCount = grouped.length
+  const totalCount = deck.length
+  const doublesCount = totalCount - uniqueCount
 
-  let filtered = deck.filter(entry =>
+  let filtered = grouped.filter(entry =>
     !search || entry.characters_with_likes?.rp_name?.toLowerCase().includes(search.toLowerCase())
   )
 
@@ -196,7 +216,10 @@ function Deck() {
           <div>
             <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '2rem', color: '#ffffff', lineHeight: 1 }}>INVENTAIRE</h2>
             <p className="font-mono text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>
-              {deck.length} carte{deck.length !== 1 ? 's' : ''} obtenue{deck.length !== 1 ? 's' : ''}
+              {uniqueCount} carte{uniqueCount !== 1 ? 's' : ''} unique{uniqueCount !== 1 ? 's' : ''}
+              {doublesCount > 0 && (
+                <span style={{ color: '#fbc059' }}> · {doublesCount} doublon{doublesCount > 1 ? 's' : ''}</span>
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -226,7 +249,7 @@ function Deck() {
           </div>
         )}
 
-        {!loading && deck.length === 0 && (
+        {!loading && grouped.length === 0 && (
           <div className="flex flex-col items-center justify-center h-60 gap-4">
             <p className="font-mono text-sm text-center" style={{ color: 'rgba(255,255,255,0.3)' }}>
               Ton casier est vide.<br />Ouvre des packs pour obtenir des cartes !
@@ -238,16 +261,33 @@ function Deck() {
           </div>
         )}
 
-        {!loading && deck.length > 0 && (
+        {!loading && grouped.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {filtered.map(entry => {
               const character = entry.characters_with_likes
               if (!character) return null
               const inTeam = team.some(c => c?.id === character?.id)
+              const count = entry.count || 1
               return (
-                <div key={entry.character_id} className="relative cursor-pointer group"
+                <div key={entry.character_id} className="relative cursor-pointer group" style={{ overflow: 'visible' }}
                   onClick={() => handleCardClick(character)}>
                   <CharacterCard character={character} />
+
+                  {/* Badge doublons */}
+                  {count > 1 && (
+                    <div className="absolute z-20 flex items-center justify-center"
+                      style={{
+                        top: 0, left: '50%', transform: 'translate(-50%, -50%)',
+                        minWidth: 22, height: 22, borderRadius: 999,
+                        background: '#fbc059', color: '#0a0a0a',
+                        fontFamily: 'monospace', fontSize: '0.65rem', fontWeight: 'bold',
+                        padding: '0 6px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+                      }}>
+                      ×{count}
+                    </div>
+                  )}
+
                   {inTeam && (
                     <div className="absolute inset-0 rounded-2xl pointer-events-none"
                       style={{ border: '2px solid rgba(52,211,153,0.5)', background: 'rgba(52,211,153,0.08)', zIndex: 10 }}>

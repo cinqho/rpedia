@@ -622,21 +622,6 @@ function GiveCardTab() {
     setGiving(true)
     setError(null)
 
-    // Vérifier si le joueur a déjà cette carte
-    const { data: existing } = await supabase
-      .from('deck')
-      .select('id')
-      .eq('user_id', selectedPlayer.id)
-      .eq('character_id', selectedCard.id)
-      .limit(1)
-
-    if (existing && existing.length > 0) {
-      setError(`${selectedPlayer.discord_username} possède déjà cette carte.`)
-      setGiving(false)
-      setConfirmGive(false)
-      return
-    }
-
     const { error: err } = await supabase.from('deck').insert({
       user_id: selectedPlayer.id,
       character_id: selectedCard.id,
