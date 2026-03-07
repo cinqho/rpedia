@@ -82,7 +82,6 @@ function CharacterEquilibrageRow({ character, onSave }) {
 
   async function handleMarkReady() {
     setMarkingReady(true)
-    // Sauvegarder les stats ET passer en equilibrage_ready
     await supabase.from('characters').update({
       stat_rp:  stats.stat_rp,
       stat_pvp: stats.stat_pvp,
@@ -108,8 +107,6 @@ function CharacterEquilibrageRow({ character, onSave }) {
             {character.server} · {character.universe}
           </p>
         </div>
-
-        {/* Stats actuelles */}
         <div className="hidden md:flex items-center gap-1 flex-shrink-0">
           {['stat_rp', 'stat_pvp', 'stat_lor', 'stat_imp'].map(s => (
             <span key={s} className="font-mono text-xs px-1.5 py-0.5 rounded"
@@ -118,12 +115,10 @@ function CharacterEquilibrageRow({ character, onSave }) {
             </span>
           ))}
         </div>
-
         <span className="font-mono text-xs px-2 py-0.5 rounded-full flex-shrink-0"
           style={{ background: `${rarityColor}18`, color: rarityColor, border: `1px solid ${rarityColor}44` }}>
           {character.rarity || 'NORMAL'}
         </span>
-
         {markedReady ? (
           <span className="font-mono text-xs px-2 py-0.5 rounded-full flex-shrink-0 font-bold"
             style={{ background: 'rgba(168,85,247,0.15)', color: '#A855F7', border: '1px solid rgba(168,85,247,0.4)' }}>
@@ -140,8 +135,6 @@ function CharacterEquilibrageRow({ character, onSave }) {
 
       {open && (
         <div className="px-4 pb-4 pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-
-          {/* Infos lecture seule */}
           <div className="grid grid-cols-2 gap-3 mb-4 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)' }}>
             <div>
               <p style={{ ...labelStyle, color: 'rgba(255,255,255,0.2)' }}>Nom RP</p>
@@ -163,7 +156,6 @@ function CharacterEquilibrageRow({ character, onSave }) {
             )}
           </div>
 
-          {/* Stats modifiables */}
           <div className="mb-4">
             <p style={{ ...labelStyle, marginBottom: '10px' }}>Stats (modifiables)</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -189,14 +181,11 @@ function CharacterEquilibrageRow({ character, onSave }) {
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <p className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.15)' }}>ID : {character.id}</p>
             <div className="flex gap-2">
-              {/* Sauvegarder stats sans changer le status */}
               <button onClick={handleSaveStats} disabled={saving || markedReady}
                 className="px-4 py-2 rounded-lg font-mono text-xs font-bold tracking-widest uppercase transition-all duration-200 hover:opacity-90 disabled:opacity-40"
                 style={{ background: saved ? '#34D399' : 'rgba(56,189,248,0.1)', color: saved ? '#0a0a0a' : '#38BDF8', border: '1px solid rgba(56,189,248,0.3)' }}>
                 {saving ? '...' : saved ? '✓ Sauvegardé' : 'Sauvegarder stats'}
               </button>
-
-              {/* Marquer comme ready */}
               {!markedReady ? (
                 <button onClick={handleMarkReady} disabled={markingReady}
                   className="px-4 py-2 rounded-lg font-mono text-xs font-bold tracking-widest uppercase transition-all duration-200 hover:opacity-90 disabled:opacity-50"
@@ -223,7 +212,9 @@ function Equilibrage() {
   const [characters, setCharacters] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [tab, setTab] = useState('equilibrage') // 'equilibrage' | 'ready'
+  const [filterServer, setFilterServer] = useState('all')
+  const [servers, setServers] = useState([])
+  const [tab, setTab] = useState('equilibrage')
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -253,6 +244,8 @@ function Equilibrage() {
       .in('status', ['equilibrage', 'equilibrage_ready'])
       .order('created_at', { ascending: false })
     setCharacters(data || [])
+    const unique = [...new Set((data || []).map(c => c.server?.trim()).filter(Boolean))].sort()
+    setServers(unique)
     setLoading(false)
   }
 
@@ -278,9 +271,11 @@ function Equilibrage() {
   const enCours = characters.filter(c => c.status === 'equilibrage')
   const ready   = characters.filter(c => c.status === 'equilibrage_ready')
 
-  const filtered = (tab === 'equilibrage' ? enCours : ready).filter(c =>
-    !search || c.rp_name?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = (tab === 'equilibrage' ? enCours : ready).filter(c => {
+    const matchSearch = !search || c.rp_name?.toLowerCase().includes(search.toLowerCase())
+    const matchServer = filterServer === 'all' || c.server === filterServer
+    return matchSearch && matchServer
+  })
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -293,7 +288,6 @@ function Equilibrage() {
         </p>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-2 mb-5">
         {[
           { key: 'equilibrage', label: `⚙ En cours (${enCours.length})` },
@@ -311,9 +305,14 @@ function Equilibrage() {
         ))}
       </div>
 
-      <div className="flex gap-3 mb-4">
+      <div className="flex gap-3 mb-4 flex-wrap">
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un personnage..."
-          style={{ ...inputStyle, flex: 1 }} />
+          style={{ ...inputStyle, flex: 1, minWidth: '160px' }} />
+        <select value={filterServer} onChange={e => setFilterServer(e.target.value)}
+          style={{ ...inputStyle, width: 'auto' }}>
+          <option value="all" style={{ background: '#0a0a0a' }}>Tous les serveurs</option>
+          {servers.map(s => <option key={s} value={s} style={{ background: '#0a0a0a' }}>{s}</option>)}
+        </select>
         <button onClick={fetchCharacters} className="px-4 py-2 rounded-lg font-mono text-xs"
           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}>
           ↻ Refresh

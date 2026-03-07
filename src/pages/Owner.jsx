@@ -790,6 +790,226 @@ function GiveCardTab() {
   )
 }
 
+
+// ─── Onglet Équipe / Rôles ────────────────────────────────────────────────────
+function TeamTab() {
+  const [admins, setAdmins] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [saving, setSaving] = useState(null)
+  const [saved, setSaved] = useState(null)
+  const [removing, setRemoving] = useState(null)
+  const [confirmRemove, setConfirmRemove] = useState(null)
+
+  // Ajout nouveau membre
+  const [addSearch, setAddSearch] = useState('')
+  const [addResults, setAddResults] = useState([])
+  const [selectedUser, setSelectedUser] = useState(null)
+  const [selectedRole, setSelectedRole] = useState('admin')
+  const [adding, setAdding] = useState(false)
+  const [added, setAdded] = useState(false)
+
+  useEffect(() => { fetchAdmins() }, [])
+
+  async function fetchAdmins() {
+    setLoading(true)
+    const { data: adminData } = await supabase
+      .from('admins')
+      .select('user_id, role')
+
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, discord_username, avatar_url')
+
+    const profileMap = {}
+    for (const p of profiles || []) profileMap[p.id] = p
+
+    setAdmins((adminData || [])
+      .filter(a => a.role !== 'owner')
+      .map(a => ({ ...a, profile: profileMap[a.user_id] || null }))
+    )
+    setLoading(false)
+  }
+
+  async function updateRole(userId, newRole) {
+    setSaving(userId)
+    await supabase.from('admins').update({ role: newRole }).eq('user_id', userId)
+    setAdmins(prev => prev.map(a => a.user_id === userId ? { ...a, role: newRole } : a))
+    setSaving(null)
+    setSaved(userId)
+    setTimeout(() => setSaved(null), 1500)
+  }
+
+  async function removeAdmin(userId) {
+    setRemoving(userId)
+    await supabase.from('admins').delete().eq('user_id', userId)
+    setAdmins(prev => prev.filter(a => a.user_id !== userId))
+    setRemoving(null)
+    setConfirmRemove(null)
+  }
+
+  async function searchUsers(val) {
+    setAddSearch(val)
+    setSelectedUser(null)
+    if (val.trim().length < 2) return setAddResults([])
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, discord_username, avatar_url')
+      .ilike('discord_username', `%${val.trim()}%`)
+      .limit(6)
+    // Exclure ceux déjà dans l'équipe
+    const existing = new Set(admins.map(a => a.user_id))
+    setAddResults((data || []).filter(p => !existing.has(p.id)))
+  }
+
+  async function addMember() {
+    if (!selectedUser) return
+    setAdding(true)
+    await supabase.from('admins').insert({ user_id: selectedUser.id, role: selectedRole })
+    setAdmins(prev => [...prev, { user_id: selectedUser.id, role: selectedRole, profile: selectedUser }])
+    setAdding(false)
+    setAdded(true)
+    setSelectedUser(null)
+    setAddSearch('')
+    setAddResults([])
+    setTimeout(() => setAdded(false), 2000)
+  }
+
+  const roleColors = { admin: '#38BDF8', equilibrage: '#A855F7' }
+  const roleLabels = { admin: 'Admin', equilibrage: 'Équilibrage' }
+
+  const filtered = admins.filter(a =>
+    !search || a.profile?.discord_username?.toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <div className="flex flex-col gap-6">
+
+      {/* Ajouter un membre */}
+      <div className="p-4 rounded-xl" style={{ background: 'rgba(251,192,89,0.05)', border: '1px solid rgba(251,192,89,0.15)' }}>
+        <p className="font-mono text-xs font-bold mb-4" style={{ color: '#fbc059', letterSpacing: '0.08em' }}>
+          ➕ AJOUTER UN MEMBRE
+        </p>
+        <div className="flex flex-col gap-3">
+          <div>
+            <label style={labelStyle}>Rechercher un utilisateur</label>
+            <input value={addSearch} onChange={e => searchUsers(e.target.value)}
+              placeholder="Pseudo Discord..."
+              style={{ ...inputStyle, borderColor: selectedUser ? '#34D399' : 'rgba(255,255,255,0.12)' }} />
+            {addResults.length > 0 && !selectedUser && (
+              <div className="mt-1 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)', background: '#0f0f0f' }}>
+                {addResults.map(p => (
+                  <div key={p.id} className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-white/5 transition-all"
+                    onClick={() => { setSelectedUser(p); setAddSearch(p.discord_username); setAddResults([]) }}>
+                    {p.avatar_url
+                      ? <img src={p.avatar_url} alt="" className="w-7 h-7 rounded-full flex-shrink-0" />
+                      : <div className="w-7 h-7 rounded-full flex-shrink-0" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                    }
+                    <span className="font-mono text-sm" style={{ color: '#fff' }}>{p.discord_username}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {selectedUser && (
+              <div className="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg" style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)' }}>
+                {selectedUser.avatar_url && <img src={selectedUser.avatar_url} alt="" className="w-6 h-6 rounded-full" />}
+                <span className="font-mono text-xs" style={{ color: '#34D399' }}>✓ {selectedUser.discord_username}</span>
+                <button onClick={() => { setSelectedUser(null); setAddSearch('') }} className="ml-auto font-mono text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>✕</button>
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3 items-end">
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Rôle</label>
+              <select value={selectedRole} onChange={e => setSelectedRole(e.target.value)} style={inputStyle}>
+                <option value="admin"       style={{ background: '#0a0a0a' }}>Admin</option>
+                <option value="equilibrage" style={{ background: '#0a0a0a' }}>Équilibrage</option>
+              </select>
+            </div>
+            <button onClick={addMember} disabled={!selectedUser || adding}
+              className="px-5 py-2 rounded-lg font-mono text-xs font-bold tracking-widest uppercase transition-all hover:opacity-90 disabled:opacity-40"
+              style={{ background: added ? '#34D399' : '#fbc059', color: '#0a0a0a', whiteSpace: 'nowrap' }}>
+              {adding ? '...' : added ? '✓ Ajouté' : 'Ajouter'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Liste des membres */}
+      <div>
+        <div className="flex gap-3 mb-4">
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..."
+            style={{ ...inputStyle, flex: 1 }} />
+          <button onClick={fetchAdmins} className="px-4 py-2 rounded-lg font-mono text-xs"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}>
+            ↻ Refresh
+          </button>
+        </div>
+
+        {loading ? (
+          <p className="font-mono text-xs text-center py-8" style={{ color: 'rgba(255,255,255,0.3)' }}>Chargement...</p>
+        ) : filtered.length === 0 ? (
+          <p className="font-mono text-xs text-center py-8" style={{ color: 'rgba(255,255,255,0.3)' }}>Aucun membre.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {filtered.map(a => {
+              const color = roleColors[a.role] || '#9CA3AF'
+              return (
+                <div key={a.user_id} className="flex items-center gap-4 px-4 py-3 rounded-xl"
+                  style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${color}18` }}>
+                  {a.profile?.avatar_url
+                    ? <img src={a.profile.avatar_url} alt="" className="w-8 h-8 rounded-full flex-shrink-0" />
+                    : <div className="w-8 h-8 rounded-full flex-shrink-0" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                  }
+                  <div className="flex-1 min-w-0">
+                    <p className="font-mono text-sm font-bold truncate" style={{ color: '#fff' }}>
+                      {a.profile?.discord_username || a.user_id}
+                    </p>
+                  </div>
+
+                  {/* Sélecteur de rôle */}
+                  <select value={a.role} onChange={e => updateRole(a.user_id, e.target.value)}
+                    disabled={saving === a.user_id}
+                    style={{ ...inputStyle, width: 'auto', color, borderColor: `${color}44` }}>
+                    <option value="admin"       style={{ background: '#0a0a0a', color: '#38BDF8' }}>Admin</option>
+                    <option value="equilibrage" style={{ background: '#0a0a0a', color: '#A855F7' }}>Équilibrage</option>
+                  </select>
+
+                  {saved === a.user_id && <span className="font-mono text-xs" style={{ color: '#34D399' }}>✓</span>}
+
+                  {/* Retirer */}
+                  {confirmRemove === a.user_id ? (
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Confirmer ?</span>
+                      <button onClick={() => removeAdmin(a.user_id)} disabled={removing === a.user_id}
+                        className="px-3 py-1 rounded-lg font-mono text-xs font-bold hover:opacity-90 disabled:opacity-50"
+                        style={{ background: '#FF2D55', color: '#fff' }}>
+                        {removing === a.user_id ? '...' : 'Oui'}
+                      </button>
+                      <button onClick={() => setConfirmRemove(null)}
+                        className="px-3 py-1 rounded-lg font-mono text-xs hover:opacity-70"
+                        style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
+                        Non
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setConfirmRemove(a.user_id)}
+                      className="px-3 py-1.5 rounded-lg font-mono text-xs transition-all hover:opacity-80 flex-shrink-0"
+                      style={{ background: 'rgba(255,45,85,0.08)', border: '1px solid rgba(255,45,85,0.2)', color: '#FF2D55' }}>
+                      Retirer
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Page Owner ───────────────────────────────────────────────────────────────
 function Owner() {
   const [user, setUser] = useState(null)
@@ -844,6 +1064,7 @@ function Owner() {
           { key: 'rarity-logs', label: '📋 Logs raretés' },
           { key: 'status-logs', label: '📋 Logs status' },
           { key: 'give-card', label: '🎁 Donner une carte' },
+          { key: 'team', label: '👥 Équipe' },
         ].map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className="px-4 py-2 rounded-xl font-mono text-xs font-bold tracking-wider transition-all duration-200"
@@ -862,6 +1083,7 @@ function Owner() {
       {tab === 'rarity-logs' && <RarityLogsTab />}
       {tab === 'status-logs' && <StatusLogsTab />}
       {tab === 'give-card' && <GiveCardTab />}
+      {tab === 'team' && <TeamTab />}
     </div>
   )
 }
