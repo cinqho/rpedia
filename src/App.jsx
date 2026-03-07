@@ -10,6 +10,7 @@ import Pack from './pages/Pack.jsx'
 import Deck from './pages/Deck.jsx'
 import Admin from './pages/Admin.jsx'
 import Owner from './pages/Owner.jsx'
+import Equilibrage from './pages/Equilibrage.jsx'
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/deck" element={<PageWrapper><Deck /></PageWrapper>} />
           <Route path="/admin" element={<PageWrapper><Admin /></PageWrapper>} />
           <Route path="/owner" element={<PageWrapper><Owner /></PageWrapper>} />
+          <Route path="/equilibrage" element={<PageWrapper><Equilibrage /></PageWrapper>} />
         </Routes>
       </div>
     </BrowserRouter>

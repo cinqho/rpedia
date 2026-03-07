@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Home, Users, PlusCircle, Trophy, Info, Package, LayoutGrid, Menu, X, Shield, Crown } from 'lucide-react'
+import { Home, Users, PlusCircle, Trophy, Info, Package, LayoutGrid, Menu, X, Shield, Crown, Scale } from 'lucide-react'
 import AuthButton from './AuthButton'
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
@@ -21,7 +21,7 @@ const sidebarStyle = {
   borderRadius: '16px',
 }
 
-function SidebarContent({ onClose, isAdmin, isOwner }) {
+function SidebarContent({ onClose, isAdmin, isOwner, isEquilibrage }) {
   return (
     <>
       {/* Ligne décorative */}
@@ -85,9 +85,24 @@ function SidebarContent({ onClose, isAdmin, isOwner }) {
         })}
       </nav>
 
-      {/* Boutons Admin / Owner */}
-      {(isAdmin || isOwner) && (
+      {/* Boutons rôles */}
+      {(isAdmin || isOwner || isEquilibrage) && (
         <div className="mx-4 mb-3 flex flex-col gap-1" style={{ position: 'relative', zIndex: 10 }}>
+          {isEquilibrage && (
+            <NavLink
+              to="/equilibrage"
+              onClick={onClose}
+              className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 font-mono text-sm tracking-wide ${isActive ? '' : 'hover:bg-white/5'}`}
+              style={({ isActive }) => ({
+                color: isActive ? '#38BDF8' : 'rgba(56,189,248,0.6)',
+                background: isActive ? 'rgba(56,189,248,0.08)' : 'transparent',
+                borderLeft: isActive ? '2px solid #38BDF8' : '2px solid transparent',
+              })}
+            >
+              <Scale size={16} style={{ color: '#38BDF8', flexShrink: 0 }} />
+              Équilibrage
+            </NavLink>
+          )}
           {isAdmin && (
             <NavLink
               to="/admin"
@@ -147,9 +162,15 @@ function Sidebar() {
   const [open, setOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isOwner, setIsOwner] = useState(false)
+  const [isEquilibrage, setIsEquilibrage] = useState(false)
 
   async function checkRole(userId) {
-    if (!userId) { setIsAdmin(false); setIsOwner(false); return }
+    if (!userId) {
+      setIsAdmin(false)
+      setIsOwner(false)
+      setIsEquilibrage(false)
+      return
+    }
     const { data } = await supabase
       .from('admins')
       .select('role')
@@ -157,6 +178,7 @@ function Sidebar() {
       .single()
     setIsAdmin(!!data)
     setIsOwner(data?.role === 'owner')
+    setIsEquilibrage(data?.role === 'equilibrage' || data?.role === 'owner')
   }
 
   useEffect(() => {
@@ -187,7 +209,7 @@ function Sidebar() {
         className="hidden md:flex fixed left-0 top-0 h-screen w-56 flex-col z-50"
         style={{ ...sidebarStyle, margin: '16px 0px 16px 16px', height: 'calc(100vh - 32px)' }}
       >
-        <SidebarContent isAdmin={isAdmin} isOwner={isOwner} />
+        <SidebarContent isAdmin={isAdmin} isOwner={isOwner} isEquilibrage={isEquilibrage} />
       </motion.aside>
 
       {/* Overlay mobile */}
@@ -210,7 +232,7 @@ function Sidebar() {
               className="fixed left-0 top-0 h-full w-64 flex flex-col z-50 md:hidden"
               style={{ ...sidebarStyle, borderRadius: '0 16px 16px 0' }}
             >
-              <SidebarContent onClose={() => setOpen(false)} isAdmin={isAdmin} isOwner={isOwner} />
+              <SidebarContent onClose={() => setOpen(false)} isAdmin={isAdmin} isOwner={isOwner} isEquilibrage={isEquilibrage} />
             </motion.aside>
           </>
         )}

@@ -10,7 +10,7 @@ const statOptions = [
 ]
 
 const universes = ['Naruto', 'One Piece', 'Bleach', 'Dragon Ball', 'Autre']
-const statusOptions = ['pending', 'approved', 'rejected']
+const statusOptions = ['pending', 'equilibrage', 'equilibrage_ready', 'approved', 'rejected']
 
 const rarityOptions = [
   'NORMAL', 'VETERAN', 'ELITE', 'EPIQUE', 'SECRET', 'LEGENDAIRE', 'ANCESTRAL', 'ICONE',
@@ -39,6 +39,14 @@ const rarityWeights = {
 }
 
 const HIDDEN_RARITIES = ['SECRET']
+
+const statusColors = {
+  pending:           '#fbc059',
+  equilibrage:       '#38BDF8',
+  equilibrage_ready: '#A855F7',
+  approved:          '#34D399',
+  rejected:          '#FF2D55',
+}
 
 const inputStyle = {
   background: 'rgba(255,255,255,0.04)',
@@ -95,6 +103,7 @@ function CharacterRow({ character, adminId, onSave }) {
   const displayRarity = rarityOptions.includes(form.rarity) ? form.rarity : 'NORMAL'
   const rarityColor = rarityColors[displayRarity] || '#9CA3AF'
   const isHidden = HIDDEN_RARITIES.includes(displayRarity)
+  const statusColor = statusColors[form.status] || '#9CA3AF'
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -104,9 +113,7 @@ function CharacterRow({ character, adminId, onSave }) {
     const oldRarity = form.rarity || 'NORMAL'
     if (newRarity === oldRarity) return
     setSavingRarity(true)
-
     await supabase.from('characters').update({ rarity: newRarity }).eq('id', character.id)
-
     await supabase.from('rarity_logs').insert({
       character_id: character.id,
       character_name: form.rp_name,
@@ -114,7 +121,6 @@ function CharacterRow({ character, adminId, onSave }) {
       old_rarity: oldRarity,
       new_rarity: newRarity,
     })
-
     setForm(f => ({ ...f, rarity: newRarity }))
     onSave({ ...character, ...form, rarity: newRarity })
     setSavingRarity(false)
@@ -123,7 +129,6 @@ function CharacterRow({ character, adminId, onSave }) {
   async function handleSave() {
     setSaving(true)
     const oldStatus = character.status
-
     const { error } = await supabase
       .from('characters')
       .update({
@@ -143,7 +148,6 @@ function CharacterRow({ character, adminId, onSave }) {
       })
       .eq('id', character.id)
 
-    // Log si le status a changé
     if (!error && form.status !== oldStatus) {
       await supabase.from('status_logs').insert({
         character_id:   character.id,
@@ -162,18 +166,9 @@ function CharacterRow({ character, adminId, onSave }) {
     }
   }
 
-  const statusColor = {
-    pending:  '#fbc059',
-    approved: '#34D399',
-    rejected: '#FF2D55',
-  }[form.status] || '#9CA3AF'
-
   return (
     <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${rarityColor}22`, background: 'rgba(255,255,255,0.02)' }}>
-      <div
-        className="flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-white/5 transition-all"
-        onClick={() => setOpen(o => !o)}
-      >
+      <div className="flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-white/5 transition-all" onClick={() => setOpen(o => !o)}>
         {form.image_url && (
           <img src={form.image_url} alt={form.rp_name} className="w-8 h-8 rounded-lg object-cover object-top flex-shrink-0" />
         )}
@@ -181,22 +176,24 @@ function CharacterRow({ character, adminId, onSave }) {
           <p className="font-mono font-bold text-sm truncate" style={{ color: '#ffffff' }}>{form.rp_name}</p>
           <p className="font-mono text-xs truncate" style={{ color: 'rgba(255,255,255,0.3)' }}>{form.server} · {form.universe}</p>
         </div>
-
         <span className="font-mono text-xs px-2 py-0.5 rounded-full flex-shrink-0"
           style={{ background: `${rarityColor}18`, color: rarityColor, border: `1px solid ${rarityColor}44` }}>
           {displayRarity}
-          {rarityWeights[displayRarity] && (
-            <span style={{ opacity: 0.5, marginLeft: 4 }}>{rarityWeights[displayRarity]}</span>
-          )}
+          {rarityWeights[displayRarity] && <span style={{ opacity: 0.5, marginLeft: 4 }}>{rarityWeights[displayRarity]}</span>}
         </span>
-
         {isHidden && (
           <span className="font-mono text-xs px-2 py-0.5 rounded-full flex-shrink-0"
             style={{ background: 'rgba(244,114,182,0.1)', color: '#F472B6', border: '1px solid rgba(244,114,182,0.3)' }}>
             caché
           </span>
         )}
-
+        {/* Badge equilibrage_ready mis en avant */}
+        {form.status === 'equilibrage_ready' && (
+          <span className="font-mono text-xs px-2 py-0.5 rounded-full flex-shrink-0 font-bold"
+            style={{ background: 'rgba(168,85,247,0.15)', color: '#A855F7', border: '1px solid rgba(168,85,247,0.5)', animation: 'pulse 2s infinite' }}>
+            ⚡ READY
+          </span>
+        )}
         <span className="font-mono text-xs px-2 py-0.5 rounded-full flex-shrink-0"
           style={{ background: `${statusColor}18`, color: statusColor, border: `1px solid ${statusColor}44` }}>
           {form.status}
@@ -221,12 +218,8 @@ function CharacterRow({ character, adminId, onSave }) {
               Rareté
               {savingRarity && <span style={{ color: 'rgba(255,255,255,0.3)', textTransform: 'none', letterSpacing: 0 }}> — enregistrement...</span>}
             </label>
-            <select
-              value={displayRarity}
-              onChange={e => handleRarityChange(e.target.value)}
-              disabled={savingRarity}
-              style={{ ...inputStyle, color: rarityColor, borderColor: `${rarityColor}44` }}
-            >
+            <select value={displayRarity} onChange={e => handleRarityChange(e.target.value)} disabled={savingRarity}
+              style={{ ...inputStyle, color: rarityColor, borderColor: `${rarityColor}44` }}>
               {rarityOptions.map(r => (
                 <option key={r} value={r} style={{ background: '#0a0a0a', color: rarityColors[r] || '#fff' }}>
                   {r}{rarityWeights[r] ? `  —  ${rarityWeights[r]}` : ''}
@@ -237,11 +230,6 @@ function CharacterRow({ character, adminId, onSave }) {
             {isHidden && (
               <p className="font-mono mt-1" style={{ fontSize: '0.6rem', color: '#F472B6', opacity: 0.7 }}>
                 ⚠ Cette rareté n'apparaît pas dans la liste publique des personnages.
-              </p>
-            )}
-            {displayRarity !== (form.rarity || 'NORMAL') && (
-              <p className="font-mono mt-1" style={{ fontSize: '0.6rem', color: '#fbc059', opacity: 0.7 }}>
-                ⚠ Ancienne rareté "{form.rarity}" non reconnue — affichée comme NORMAL.
               </p>
             )}
           </div>
@@ -260,12 +248,9 @@ function CharacterRow({ character, adminId, onSave }) {
 
           <div className="flex items-center justify-between">
             <p className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.15)' }}>ID : {character.id}</p>
-            <button
-              onClick={handleSave}
-              disabled={saving}
+            <button onClick={handleSave} disabled={saving}
               className="px-6 py-2 rounded-lg font-mono text-xs font-bold tracking-widest uppercase transition-all duration-200 hover:opacity-90 disabled:opacity-50"
-              style={{ background: saved ? '#34D399' : '#fbc059', color: '#0a0a0a' }}
-            >
+              style={{ background: saved ? '#34D399' : '#fbc059', color: '#0a0a0a' }}>
               {saving ? 'Sauvegarde...' : saved ? '✓ Sauvegardé' : 'Sauvegarder'}
             </button>
           </div>
@@ -291,11 +276,7 @@ function Admin() {
       const u = data.session?.user ?? null
       setUser(u)
       if (u) {
-        const { data: adminData } = await supabase
-          .from('admins')
-          .select('role')
-          .eq('user_id', u.id)
-          .single()
+        const { data: adminData } = await supabase.from('admins').select('role').eq('user_id', u.id).single()
         setIsAdmin(!!adminData)
       }
       setLoading(false)
@@ -308,10 +289,7 @@ function Admin() {
 
   async function fetchCharacters() {
     setLoading(true)
-    const { data } = await supabase
-      .from('characters')
-      .select('*')
-      .order('created_at', { ascending: false })
+    const { data } = await supabase.from('characters').select('*').order('created_at', { ascending: false })
     setCharacters(data || [])
     const unique = [...new Set((data || []).map(c => c.server?.trim()).filter(Boolean))].sort()
     setServers(unique)
@@ -327,7 +305,6 @@ function Admin() {
       <p className="font-mono text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>Connexion requise.</p>
     </div>
   )
-
   if (!isAdmin) return (
     <div className="flex items-center justify-center h-full">
       <div className="text-center">
@@ -348,10 +325,12 @@ function Admin() {
   })
 
   const counts = {
-    all:      characters.length,
-    pending:  characters.filter(c => c.status === 'pending').length,
-    approved: characters.filter(c => c.status === 'approved').length,
-    rejected: characters.filter(c => c.status === 'rejected').length,
+    all:               characters.length,
+    pending:           characters.filter(c => c.status === 'pending').length,
+    equilibrage:       characters.filter(c => c.status === 'equilibrage').length,
+    equilibrage_ready: characters.filter(c => c.status === 'equilibrage_ready').length,
+    approved:          characters.filter(c => c.status === 'approved').length,
+    rejected:          characters.filter(c => c.status === 'rejected').length,
   }
 
   const rarityCounts = rarityOptions.reduce((acc, r) => {
@@ -366,28 +345,35 @@ function Admin() {
           PANEL <span style={{ color: '#fbc059' }}>ADMIN</span>
         </h1>
         <p className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
-          {counts.all} personnages · {counts.pending} en attente · {counts.approved} approuvés · {counts.rejected} refusés
+          {counts.all} personnages · {counts.pending} en attente · {counts.equilibrage} en équilibrage · {counts.equilibrage_ready} ready · {counts.approved} approuvés · {counts.rejected} refusés
         </p>
+        {counts.equilibrage_ready > 0 && (
+          <div className="mt-2 px-3 py-2 rounded-lg inline-flex items-center gap-2"
+            style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.3)' }}>
+            <span style={{ color: '#A855F7', fontSize: '0.75rem', fontFamily: 'monospace' }}>
+              ⚡ {counts.equilibrage_ready} carte{counts.equilibrage_ready > 1 ? 's' : ''} prête{counts.equilibrage_ready > 1 ? 's' : ''} à approuver
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-3 mb-4">
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Rechercher..."
-          style={{ ...inputStyle, width: 'auto', flex: 1, minWidth: '160px' }}
-        />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..."
+          style={{ ...inputStyle, width: 'auto', flex: 1, minWidth: '160px' }} />
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
-          <option value="all"      style={{ background: '#0a0a0a' }}>Tous les statuts ({counts.all})</option>
-          <option value="pending"  style={{ background: '#0a0a0a' }}>En attente ({counts.pending})</option>
-          <option value="approved" style={{ background: '#0a0a0a' }}>Approuvés ({counts.approved})</option>
-          <option value="rejected" style={{ background: '#0a0a0a' }}>Refusés ({counts.rejected})</option>
+          <option value="all"               style={{ background: '#0a0a0a' }}>Tous ({counts.all})</option>
+          <option value="pending"           style={{ background: '#0a0a0a' }}>En attente ({counts.pending})</option>
+          <option value="equilibrage"       style={{ background: '#0a0a0a' }}>Équilibrage ({counts.equilibrage})</option>
+          <option value="equilibrage_ready" style={{ background: '#0a0a0a' }}>⚡ Ready ({counts.equilibrage_ready})</option>
+          <option value="approved"          style={{ background: '#0a0a0a' }}>Approuvés ({counts.approved})</option>
+          <option value="rejected"          style={{ background: '#0a0a0a' }}>Refusés ({counts.rejected})</option>
         </select>
         <select value={filterServer} onChange={e => setFilterServer(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
           <option value="all" style={{ background: '#0a0a0a' }}>Tous les serveurs</option>
           {servers.map(s => <option key={s} value={s} style={{ background: '#0a0a0a' }}>{s}</option>)}
         </select>
-        <select value={filterRarity} onChange={e => setFilterRarity(e.target.value)} style={{ ...inputStyle, width: 'auto', color: filterRarity !== 'all' ? rarityColors[filterRarity] : '#fff' }}>
+        <select value={filterRarity} onChange={e => setFilterRarity(e.target.value)}
+          style={{ ...inputStyle, width: 'auto', color: filterRarity !== 'all' ? rarityColors[filterRarity] : '#fff' }}>
           <option value="all" style={{ background: '#0a0a0a', color: '#fff' }}>Toutes les raretés</option>
           {rarityOptions.map(r => (
             <option key={r} value={r} style={{ background: '#0a0a0a', color: rarityColors[r] || '#fff' }}>
