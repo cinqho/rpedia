@@ -99,6 +99,7 @@ function CharacterRow({ character, adminId, onSave }) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [savingRarity, setSavingRarity] = useState(false)
+  const [sendingEquilibrage, setSendingEquilibrage] = useState(false)
 
   const displayRarity = rarityOptions.includes(form.rarity) ? form.rarity : 'NORMAL'
   const rarityColor = rarityColors[displayRarity] || '#9CA3AF'
@@ -107,6 +108,22 @@ function CharacterRow({ character, adminId, onSave }) {
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value })
+  }
+
+  async function handleSendEquilibrage(e) {
+    e.stopPropagation()
+    setSendingEquilibrage(true)
+    await supabase.from('characters').update({ status: 'equilibrage' }).eq('id', character.id)
+    await supabase.from('status_logs').insert({
+      character_id:   character.id,
+      character_name: form.rp_name,
+      admin_id:       adminId,
+      old_status:     'pending',
+      new_status:     'equilibrage',
+    })
+    setForm(f => ({ ...f, status: 'equilibrage' }))
+    onSave({ ...character, ...form, status: 'equilibrage' })
+    setSendingEquilibrage(false)
   }
 
   async function handleRarityChange(newRarity) {
@@ -187,12 +204,22 @@ function CharacterRow({ character, adminId, onSave }) {
             caché
           </span>
         )}
-        {/* Badge equilibrage_ready mis en avant */}
         {form.status === 'equilibrage_ready' && (
           <span className="font-mono text-xs px-2 py-0.5 rounded-full flex-shrink-0 font-bold"
-            style={{ background: 'rgba(168,85,247,0.15)', color: '#A855F7', border: '1px solid rgba(168,85,247,0.5)', animation: 'pulse 2s infinite' }}>
+            style={{ background: 'rgba(168,85,247,0.15)', color: '#A855F7', border: '1px solid rgba(168,85,247,0.5)' }}>
             ⚡ READY
           </span>
+        )}
+        {/* Bouton rapide pending → equilibrage */}
+        {form.status === 'pending' && (
+          <button
+            onClick={handleSendEquilibrage}
+            disabled={sendingEquilibrage}
+            className="px-3 py-1.5 rounded-lg font-mono text-xs font-bold transition-all hover:opacity-90 disabled:opacity-50 flex-shrink-0"
+            style={{ background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.35)', color: '#38BDF8', whiteSpace: 'nowrap' }}
+          >
+            {sendingEquilibrage ? '...' : '⚖ Équilibrage'}
+          </button>
         )}
         <span className="font-mono text-xs px-2 py-0.5 rounded-full flex-shrink-0"
           style={{ background: `${statusColor}18`, color: statusColor, border: `1px solid ${statusColor}44` }}>
@@ -277,7 +304,7 @@ function Admin() {
       setUser(u)
       if (u) {
         const { data: adminData } = await supabase.from('admins').select('role').eq('user_id', u.id).single()
-        setIsAdmin(!!adminData)
+        setIsAdmin(!!adminData && adminData.role !== 'equilibrage')
       }
       setLoading(false)
     })
