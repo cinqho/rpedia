@@ -12,16 +12,8 @@ const statOptions = [
 const universes = ['Naruto', 'One Piece', 'Bleach', 'Dragon Ball', 'Autre']
 const statusOptions = ['pending', 'approved', 'rejected']
 
-// ─── Raretés alignées avec CharacterCard ─────────────────────────────────────
 const rarityOptions = [
-  'NORMAL',
-  'VETERAN',
-  'ELITE',
-  'EPIQUE',
-  'SECRET',
-  'LEGENDAIRE',
-  'ANCESTRAL',
-  'ICONE',
+  'NORMAL', 'VETERAN', 'ELITE', 'EPIQUE', 'SECRET', 'LEGENDAIRE', 'ANCESTRAL', 'ICONE',
 ]
 
 const rarityColors = {
@@ -46,7 +38,6 @@ const rarityWeights = {
   NORMAL:     '45%',
 }
 
-// Raretés qui ne doivent pas apparaître dans la liste publique des personnages
 const HIDDEN_RARITIES = ['SECRET']
 
 const inputStyle = {
@@ -101,7 +92,6 @@ function CharacterRow({ character, adminId, onSave }) {
   const [saved, setSaved] = useState(false)
   const [savingRarity, setSavingRarity] = useState(false)
 
-  // Normalise les anciennes raretés supprimées vers NORMAL à l'affichage
   const displayRarity = rarityOptions.includes(form.rarity) ? form.rarity : 'NORMAL'
   const rarityColor = rarityColors[displayRarity] || '#9CA3AF'
   const isHidden = HIDDEN_RARITIES.includes(displayRarity)
@@ -132,6 +122,8 @@ function CharacterRow({ character, adminId, onSave }) {
 
   async function handleSave() {
     setSaving(true)
+    const oldStatus = character.status
+
     const { error } = await supabase
       .from('characters')
       .update({
@@ -150,6 +142,17 @@ function CharacterRow({ character, adminId, onSave }) {
         status:      form.status,
       })
       .eq('id', character.id)
+
+    // Log si le status a changé
+    if (!error && form.status !== oldStatus) {
+      await supabase.from('status_logs').insert({
+        character_id:   character.id,
+        character_name: form.rp_name,
+        admin_id:       adminId,
+        old_status:     oldStatus,
+        new_status:     form.status,
+      })
+    }
 
     setSaving(false)
     if (!error) {
@@ -179,7 +182,6 @@ function CharacterRow({ character, adminId, onSave }) {
           <p className="font-mono text-xs truncate" style={{ color: 'rgba(255,255,255,0.3)' }}>{form.server} · {form.universe}</p>
         </div>
 
-        {/* Badge rareté */}
         <span className="font-mono text-xs px-2 py-0.5 rounded-full flex-shrink-0"
           style={{ background: `${rarityColor}18`, color: rarityColor, border: `1px solid ${rarityColor}44` }}>
           {displayRarity}
@@ -188,7 +190,6 @@ function CharacterRow({ character, adminId, onSave }) {
           )}
         </span>
 
-        {/* Badge hidden (SECRET) */}
         {isHidden && (
           <span className="font-mono text-xs px-2 py-0.5 rounded-full flex-shrink-0"
             style={{ background: 'rgba(244,114,182,0.1)', color: '#F472B6', border: '1px solid rgba(244,114,182,0.3)' }}>
@@ -196,7 +197,6 @@ function CharacterRow({ character, adminId, onSave }) {
           </span>
         )}
 
-        {/* Badge statut */}
         <span className="font-mono text-xs px-2 py-0.5 rounded-full flex-shrink-0"
           style={{ background: `${statusColor}18`, color: statusColor, border: `1px solid ${statusColor}44` }}>
           {form.status}
@@ -216,7 +216,6 @@ function CharacterRow({ character, adminId, onSave }) {
             <Field label="Statut"     name="status"    value={form.status}    onChange={handleChange} options={statusOptions} />
           </div>
 
-          {/* Sélecteur de rareté avec preview couleur et % */}
           <div className="mb-3">
             <label style={labelStyle}>
               Rareté
@@ -235,8 +234,6 @@ function CharacterRow({ character, adminId, onSave }) {
                 </option>
               ))}
             </select>
-
-            {/* Info rareté sélectionnée */}
             {isHidden && (
               <p className="font-mono mt-1" style={{ fontSize: '0.6rem', color: '#F472B6', opacity: 0.7 }}>
                 ⚠ Cette rareté n'apparaît pas dans la liste publique des personnages.
@@ -257,8 +254,8 @@ function CharacterRow({ character, adminId, onSave }) {
           </div>
 
           <div className="flex flex-col gap-3 mb-3">
-            <Field label="Description"      name="description" value={form.description} onChange={handleChange} type="textarea" />
-            <Field label="Legacy / Histoire RP" name="legacy"  value={form.legacy}      onChange={handleChange} type="textarea" />
+            <Field label="Description"          name="description" value={form.description} onChange={handleChange} type="textarea" />
+            <Field label="Legacy / Histoire RP" name="legacy"      value={form.legacy}      onChange={handleChange} type="textarea" />
           </div>
 
           <div className="flex items-center justify-between">
@@ -340,7 +337,6 @@ function Admin() {
     </div>
   )
 
-  // Normalise la rareté d'un perso pour les filtres
   const normalizeR = r => rarityOptions.includes(r) ? r : 'NORMAL'
 
   const filtered = characters.filter(c => {
@@ -358,7 +354,6 @@ function Admin() {
     rejected: characters.filter(c => c.status === 'rejected').length,
   }
 
-  // Compte par rareté (normalisée)
   const rarityCounts = rarityOptions.reduce((acc, r) => {
     acc[r] = characters.filter(c => normalizeR(c.rarity) === r).length
     return acc
@@ -375,7 +370,6 @@ function Admin() {
         </p>
       </div>
 
-      {/* Filtres */}
       <div className="flex flex-wrap gap-3 mb-4">
         <input
           value={search}
@@ -393,7 +387,6 @@ function Admin() {
           <option value="all" style={{ background: '#0a0a0a' }}>Tous les serveurs</option>
           {servers.map(s => <option key={s} value={s} style={{ background: '#0a0a0a' }}>{s}</option>)}
         </select>
-        {/* Filtre par rareté */}
         <select value={filterRarity} onChange={e => setFilterRarity(e.target.value)} style={{ ...inputStyle, width: 'auto', color: filterRarity !== 'all' ? rarityColors[filterRarity] : '#fff' }}>
           <option value="all" style={{ background: '#0a0a0a', color: '#fff' }}>Toutes les raretés</option>
           {rarityOptions.map(r => (

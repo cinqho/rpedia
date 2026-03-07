@@ -322,6 +322,8 @@ function RarityLogsTab() {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [confirmClear, setConfirmClear] = useState(false)
+  const [clearing, setClearing] = useState(false)
 
   useEffect(() => { fetchLogs() }, [])
 
@@ -344,6 +346,14 @@ function RarityLogsTab() {
     setLoading(false)
   }
 
+  async function clearLogs() {
+    setClearing(true)
+    await supabase.from('rarity_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    setLogs([])
+    setClearing(false)
+    setConfirmClear(false)
+  }
+
   const filtered = logs.filter(l =>
     !search ||
     l.character_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -360,6 +370,26 @@ function RarityLogsTab() {
           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}>
           ↻ Refresh
         </button>
+        {!confirmClear ? (
+          <button onClick={() => setConfirmClear(true)} className="px-4 py-2 rounded-lg font-mono text-xs transition-all hover:opacity-80"
+            style={{ background: 'rgba(255,45,85,0.08)', border: '1px solid rgba(255,45,85,0.2)', color: '#FF2D55' }}>
+            🗑 Vider les logs
+          </button>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Confirmer ?</span>
+            <button onClick={clearLogs} disabled={clearing}
+              className="px-3 py-1.5 rounded-lg font-mono text-xs font-bold transition-all hover:opacity-90 disabled:opacity-50"
+              style={{ background: '#FF2D55', color: '#fff' }}>
+              {clearing ? '...' : 'Oui, vider'}
+            </button>
+            <button onClick={() => setConfirmClear(false)}
+              className="px-3 py-1.5 rounded-lg font-mono text-xs transition-all hover:opacity-70"
+              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
+              Annuler
+            </button>
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -397,6 +427,133 @@ function RarityLogsTab() {
                   <span className="font-mono text-xs px-2 py-0.5 rounded-full"
                     style={{ background: `${toColor}18`, color: toColor, border: `1px solid ${toColor}44` }}>
                     {log.new_rarity}
+                  </span>
+                </div>
+                <p className="font-mono text-xs flex-shrink-0" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                  {new Date(log.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+
+// ─── Onglet Logs status ───────────────────────────────────────────────────────
+function StatusLogsTab() {
+  const [logs, setLogs] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [confirmClear, setConfirmClear] = useState(false)
+  const [clearing, setClearing] = useState(false)
+
+  useEffect(() => { fetchLogs() }, [])
+
+  async function fetchLogs() {
+    setLoading(true)
+    const { data: logsData } = await supabase
+      .from('status_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(200)
+
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, discord_username, avatar_url')
+
+    const profileMap = {}
+    for (const p of profiles || []) profileMap[p.id] = p
+
+    setLogs((logsData || []).map(l => ({ ...l, profiles: profileMap[l.admin_id] || null })))
+    setLoading(false)
+  }
+
+  async function clearLogs() {
+    setClearing(true)
+    await supabase.from('status_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    setLogs([])
+    setClearing(false)
+    setConfirmClear(false)
+  }
+
+  const statusColors = { approved: '#34D399', pending: '#fbc059', rejected: '#FF2D55' }
+
+  const filtered = logs.filter(l =>
+    !search ||
+    l.character_name?.toLowerCase().includes(search.toLowerCase()) ||
+    l.profiles?.discord_username?.toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <div>
+      <div className="flex gap-3 mb-4 flex-wrap items-center">
+        <input value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Rechercher par personnage ou admin..."
+          style={{ ...inputStyle, flex: 1, minWidth: '160px' }} />
+        <button onClick={fetchLogs} className="px-4 py-2 rounded-lg font-mono text-xs"
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}>
+          ↻ Refresh
+        </button>
+        {!confirmClear ? (
+          <button onClick={() => setConfirmClear(true)} className="px-4 py-2 rounded-lg font-mono text-xs transition-all hover:opacity-80"
+            style={{ background: 'rgba(255,45,85,0.08)', border: '1px solid rgba(255,45,85,0.2)', color: '#FF2D55' }}>
+            🗑 Vider les logs
+          </button>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Confirmer ?</span>
+            <button onClick={clearLogs} disabled={clearing}
+              className="px-3 py-1.5 rounded-lg font-mono text-xs font-bold transition-all hover:opacity-90 disabled:opacity-50"
+              style={{ background: '#FF2D55', color: '#fff' }}>
+              {clearing ? '...' : 'Oui, vider'}
+            </button>
+            <button onClick={() => setConfirmClear(false)}
+              className="px-3 py-1.5 rounded-lg font-mono text-xs transition-all hover:opacity-70"
+              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
+              Annuler
+            </button>
+          </div>
+        )}
+      </div>
+
+      {loading ? (
+        <p className="font-mono text-xs text-center py-8" style={{ color: 'rgba(255,255,255,0.3)' }}>Chargement...</p>
+      ) : filtered.length === 0 ? (
+        <p className="font-mono text-xs text-center py-8" style={{ color: 'rgba(255,255,255,0.3)' }}>Aucun log.</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {filtered.map(log => {
+            const fromColor = statusColors[log.old_status] || '#9CA3AF'
+            const toColor = statusColors[log.new_status] || '#9CA3AF'
+            return (
+              <div key={log.id} className="flex items-center gap-4 px-4 py-3 rounded-xl"
+                style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                {log.profiles?.avatar_url ? (
+                  <img src={log.profiles.avatar_url} alt="" className="w-7 h-7 rounded-full flex-shrink-0" style={{ opacity: 0.7 }} />
+                ) : (
+                  <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center"
+                    style={{ background: 'rgba(255,255,255,0.06)' }}>
+                    <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)' }}>?</span>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-mono text-sm font-bold truncate" style={{ color: '#ffffff' }}>{log.character_name}</p>
+                  <p className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                    par <span style={{ color: 'rgba(255,255,255,0.5)' }}>{log.profiles?.discord_username || log.admin_id}</span>
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="font-mono text-xs px-2 py-0.5 rounded-full"
+                    style={{ background: `${fromColor}18`, color: fromColor, border: `1px solid ${fromColor}44` }}>
+                    {log.old_status || '?'}
+                  </span>
+                  <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>→</span>
+                  <span className="font-mono text-xs px-2 py-0.5 rounded-full"
+                    style={{ background: `${toColor}18`, color: toColor, border: `1px solid ${toColor}44` }}>
+                    {log.new_status}
                   </span>
                 </div>
                 <p className="font-mono text-xs flex-shrink-0" style={{ color: 'rgba(255,255,255,0.2)' }}>
@@ -463,6 +620,7 @@ function Owner() {
           { key: 'resources', label: '🎁 Ressources joueurs' },
           { key: 'rarities', label: '✦ Raretés des cartes' },
           { key: 'rarity-logs', label: '📋 Logs raretés' },
+          { key: 'status-logs', label: '📋 Logs status' },
         ].map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className="px-4 py-2 rounded-xl font-mono text-xs font-bold tracking-wider transition-all duration-200"
@@ -479,6 +637,7 @@ function Owner() {
       {tab === 'resources' && <ResourcesTab />}
       {tab === 'rarities' && <RaritiesTab />}
       {tab === 'rarity-logs' && <RarityLogsTab />}
+      {tab === 'status-logs' && <StatusLogsTab />}
     </div>
   )
 }
