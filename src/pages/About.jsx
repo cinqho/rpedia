@@ -10,13 +10,12 @@ function About() {
 
   return (
     <div className="relative w-full h-full">
-      {/* Conteneur shapes isolé pour éviter le débordement */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
         <LeftShape />
         <RightShape />
       </div>
 
-      <div className="relative z-10 p-8 max-w-2xl mx-auto">
+      <div className="relative p-8 max-w-2xl mx-auto" style={{ zIndex: 1 }}>
         <PageTransition>
 
           <FadeItem delay={0.1}>

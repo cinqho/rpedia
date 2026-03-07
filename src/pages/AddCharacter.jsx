@@ -61,8 +61,7 @@ function AddCharacter() {
   const [servers, setServers] = useState([])
   const [customServer, setCustomServer] = useState(false)
 
-  // Vérification nom existant
-  const [nameStatus, setNameStatus] = useState(null) // null | 'checking' | 'taken' | 'free'
+  const [nameStatus, setNameStatus] = useState(null)
   const debounceRef = useRef(null)
 
   useEffect(() => {
@@ -151,8 +150,10 @@ function AddCharacter() {
   if (!user) {
     return (
       <div className="relative w-full h-full flex items-center justify-center">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none"><LeftShape /><RightShape /></div>
-        <div className="text-center relative z-10">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
+          <LeftShape /><RightShape />
+        </div>
+        <div className="text-center relative" style={{ zIndex: 1 }}>
           <h2 className="text-4xl mb-4" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#fbc059' }}>Connexion requise</h2>
           <p className="font-mono text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>Connecte-toi avec Discord via la sidebar pour proposer un personnage.</p>
         </div>
@@ -163,8 +164,10 @@ function AddCharacter() {
   if (success) {
     return (
       <div className="relative w-full h-full flex items-center justify-center">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none"><LeftShape /><RightShape /></div>
-        <div className="text-center relative z-10">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
+          <LeftShape /><RightShape />
+        </div>
+        <div className="text-center relative" style={{ zIndex: 1 }}>
           <h2 className="text-4xl mb-4" style={{ fontFamily: 'Bebas Neue, sans-serif', color: '#fbc059' }}>Proposition envoyée !</h2>
           <p className="font-mono text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
             Ton personnage sera examiné avant publication. ({pendingCount}/5 slots utilisés)
@@ -176,8 +179,10 @@ function AddCharacter() {
 
   return (
     <div className="relative w-full h-full">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none"><LeftShape /><RightShape /></div>
-      <div className="relative z-10 p-8 max-w-2xl mx-auto">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
+        <LeftShape /><RightShape />
+      </div>
+      <div className="relative p-8 max-w-2xl mx-auto" style={{ zIndex: 1 }}>
 
         <div className="mb-8 flex items-start justify-between">
           <div>
@@ -211,7 +216,6 @@ function AddCharacter() {
         ) : (
           <div className="flex flex-col gap-5">
 
-            {/* Nom RP avec vérification */}
             <div>
               <label style={labelStyle}>Nom RP *</label>
               <div style={{ position: 'relative' }}>
@@ -226,7 +230,6 @@ function AddCharacter() {
                     paddingRight: '40px',
                   }}
                 />
-                {/* Indicateur statut */}
                 <div style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.8rem' }}>
                   {nameStatus === 'checking' && <span style={{ color: 'rgba(255,255,255,0.3)' }}>···</span>}
                   {nameStatus === 'free'     && <span style={{ color: '#34D399' }}>✓</span>}
@@ -234,14 +237,10 @@ function AddCharacter() {
                 </div>
               </div>
               {nameStatus === 'taken' && (
-                <p className="font-mono text-xs mt-2" style={{ color: '#FF2D55' }}>
-                  Ce nom RP existe déjà dans la base de données.
-                </p>
+                <p className="font-mono text-xs mt-2" style={{ color: '#FF2D55' }}>Ce nom RP existe déjà dans la base de données.</p>
               )}
               {nameStatus === 'free' && (
-                <p className="font-mono text-xs mt-2" style={{ color: '#34D399' }}>
-                  Nom disponible.
-                </p>
+                <p className="font-mono text-xs mt-2" style={{ color: '#34D399' }}>Nom disponible.</p>
               )}
             </div>
 
@@ -315,7 +314,7 @@ function AddCharacter() {
               </p>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { name: 'stat_rp', label: 'RP — Qualité du roleplay' },
+                  { name: 'stat_rp',  label: 'RP — Qualité du roleplay' },
                   { name: 'stat_pvp', label: 'PVP — Combat' },
                   { name: 'stat_lor', label: 'LOR — Lore / Histoire' },
                   { name: 'stat_imp', label: 'IMP — Impact serveur' },
