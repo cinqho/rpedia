@@ -1,18 +1,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 import CharacterCard from '../components/CharacterCard'
+import CharacterModal from '../components/CharacterModal'
 
 const TEAM_SIZE = 5
 
-// Du plus commun au plus rare (ordre croissant de rareté)
 const RARITY_ORDER = [
-  'NORMAL',
-  'VETERAN',
-  'ELITE',
-  'EPIQUE',
-  'LEGENDAIRE',
-  'ANCESTRAL',
-  'ICONE',
+  'NORMAL', 'VETERAN', 'ELITE', 'EPIQUE', 'LEGENDAIRE', 'ANCESTRAL', 'ICONE',
 ]
 
 function normalizeRarity(r) {
@@ -27,7 +21,8 @@ function Deck() {
   const [savingSlot, setSavingSlot] = useState(null)
   const [search, setSearch] = useState('')
   const [editMode, setEditMode] = useState(false)
-  const [raritySort, setRaritySort] = useState(null) // null | 'asc' | 'desc'
+  const [raritySort, setRaritySort] = useState(null)
+  const [selectedCharacter, setSelectedCharacter] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -63,7 +58,6 @@ function Deck() {
   }
 
   async function toggleTeam(character) {
-    if (!editMode) return
     const alreadyInSlot = team.findIndex(c => c?.id === character.id)
     if (alreadyInSlot !== -1) {
       const newTeam = [...team]
@@ -102,6 +96,11 @@ function Deck() {
     })
   }
 
+  function handleCardClick(character) {
+    if (editMode) toggleTeam(character)
+    else setSelectedCharacter(character)
+  }
+
   if (!user) return (
     <div className="flex items-center justify-center h-full">
       <div className="text-center">
@@ -130,6 +129,8 @@ function Deck() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
+
+      <CharacterModal character={selectedCharacter} onClose={() => setSelectedCharacter(null)} />
 
       {/* ── MON ÉQUIPE ── */}
       <div className="mb-10">
@@ -161,7 +162,10 @@ function Deck() {
             <div key={i} className="relative">
               {character ? (
                 <div className="relative group">
-                  <CharacterCard character={character} />
+                  <div onClick={() => !editMode && setSelectedCharacter(character)}
+                    style={{ cursor: editMode ? 'default' : 'pointer' }}>
+                    <CharacterCard character={character} />
+                  </div>
                   {editMode && (
                     <button onClick={() => removeFromSlot(i)} disabled={savingSlot === i}
                       className="absolute inset-0 flex items-center justify-center rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"
@@ -195,34 +199,22 @@ function Deck() {
               {deck.length} carte{deck.length !== 1 ? 's' : ''} obtenue{deck.length !== 1 ? 's' : ''}
             </p>
           </div>
-
           <div className="flex items-center gap-2">
-            <button
-              onClick={cycleSort}
+            <button onClick={cycleSort}
               className="px-3 py-2 rounded-xl font-mono text-xs font-bold tracking-wider transition-all duration-200 hover:opacity-90"
               style={{
                 background: sortActive ? 'rgba(251,192,89,0.15)' : 'rgba(255,255,255,0.04)',
                 border: `1px solid ${sortActive ? 'rgba(251,192,89,0.4)' : 'rgba(255,255,255,0.1)'}`,
                 color: sortActive ? '#fbc059' : 'rgba(255,255,255,0.4)',
-              }}
-            >
+              }}>
               {sortLabel}
             </button>
-
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Rechercher une carte..."
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher une carte..."
               style={{
                 background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.1)',
-                color: '#ffffff',
-                padding: '8px 14px',
-                borderRadius: '10px',
-                fontSize: '0.8rem',
-                fontFamily: 'monospace',
-                outline: 'none',
-                width: '220px',
+                color: '#ffffff', padding: '8px 14px', borderRadius: '10px',
+                fontSize: '0.8rem', fontFamily: 'monospace', outline: 'none', width: '220px',
               }}
             />
           </div>
@@ -253,18 +245,23 @@ function Deck() {
               if (!character) return null
               const inTeam = team.some(c => c?.id === character?.id)
               return (
-                <div key={entry.character_id} className="relative cursor-pointer group" onClick={() => toggleTeam(character)}>
+                <div key={entry.character_id} className="relative cursor-pointer group"
+                  onClick={() => handleCardClick(character)}>
                   <CharacterCard character={character} />
                   {inTeam && (
-                    <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{ border: '2px solid rgba(52,211,153,0.5)', background: 'rgba(52,211,153,0.08)', zIndex: 10 }}>
+                    <div className="absolute inset-0 rounded-2xl pointer-events-none"
+                      style={{ border: '2px solid rgba(52,211,153,0.5)', background: 'rgba(52,211,153,0.08)', zIndex: 10 }}>
                       <div className="absolute bottom-2 left-0 right-0 flex justify-center">
-                        <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(52,211,153,0.9)', color: '#0a0a0a' }}>✓ Dans l'équipe</span>
+                        <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-full"
+                          style={{ background: 'rgba(52,211,153,0.9)', color: '#0a0a0a' }}>✓ Dans l'équipe</span>
                       </div>
                     </div>
                   )}
                   {editMode && !inTeam && (
-                    <div className="absolute inset-0 rounded-2xl pointer-events-none flex items-end justify-center pb-2 opacity-0 group-hover:opacity-100 transition-opacity" style={{ zIndex: 10 }}>
-                      <span className="font-mono text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(251,192,89,0.9)', color: '#0a0a0a' }}>+ Ajouter</span>
+                    <div className="absolute inset-0 rounded-2xl pointer-events-none flex items-end justify-center pb-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ zIndex: 10 }}>
+                      <span className="font-mono text-xs px-2 py-0.5 rounded-full"
+                        style={{ background: 'rgba(251,192,89,0.9)', color: '#0a0a0a' }}>+ Ajouter</span>
                     </div>
                   )}
                 </div>
