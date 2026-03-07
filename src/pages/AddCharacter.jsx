@@ -63,6 +63,29 @@ function AddCharacter() {
 
   const [nameStatus, setNameStatus] = useState(null)
   const debounceRef = useRef(null)
+  const [imageUploading, setImageUploading] = useState(false)
+  const [imagePreview, setImagePreview] = useState(null)
+
+  async function handleImageUpload(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) return setError("Image trop lourde (max 5MB).")
+    setImageUploading(true)
+    setError(null)
+    const data = new FormData()
+    data.append("file", file)
+    data.append("upload_preset", "RPedia")
+    data.append("cloud_name", "dzll8uy9f")
+    try {
+      const res = await fetch("https://api.cloudinary.com/v1_1/dzll8uy9f/image/upload", { method: "POST", body: data })
+      const json = await res.json()
+      if (json.secure_url) {
+        setForm(f => ({ ...f, image_url: json.secure_url }))
+        setImagePreview(json.secure_url)
+      } else { setError("Erreur upload image.") }
+    } catch { setError("Erreur upload image.") }
+    setImageUploading(false)
+  }
 
   useEffect(() => {
     setSuccess(false)
@@ -103,9 +126,8 @@ function AddCharacter() {
       if (value.trim().length < 2) return
       setNameStatus('checking')
       debounceRef.current = setTimeout(async () => {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .rpc('check_rp_name_exists', { p_name: value.trim() })
-        console.log('rpc result:', data, error)
         setNameStatus(data === true ? 'taken' : 'free')
       }, 500)
     }
@@ -295,13 +317,42 @@ function AddCharacter() {
             </div>
 
             <div>
-              <label style={labelStyle}>URL Image</label>
-              <input name="image_url" value={form.image_url} onChange={handleChange} placeholder="https://..." style={inputStyle} />
-              <p className="font-mono text-xs mt-2" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                💡 Upload ton image sur{' '}
-                <a href="https://imgur.com/upload" target="_blank" rel="noreferrer" style={{ color: '#fbc059', textDecoration: 'underline' }}>imgur.com</a>
-                {' '}puis fais clic droit → "Copier l'adresse de l'image" et colle-la ici.
-              </p>
+              <label style={labelStyle}>Image</label>
+
+              {/* Upload depuis le PC */}
+              <label style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                padding: '14px', borderRadius: '12px', cursor: 'pointer',
+                border: '1px dashed rgba(251,192,89,0.3)',
+                background: 'rgba(251,192,89,0.04)',
+                color: imageUploading ? 'rgba(255,255,255,0.3)' : '#fbc059',
+                fontFamily: 'monospace', fontSize: '0.8rem',
+                transition: 'all 0.2s',
+              }}>
+                <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} disabled={imageUploading} />
+                {imageUploading ? '⏳ Upload en cours...' : '📁 Choisir un fichier depuis mon PC'}
+              </label>
+
+              {/* Préview */}
+              {imagePreview && (
+                <div style={{ marginTop: '10px', position: 'relative', display: 'inline-block' }}>
+                  <img src={imagePreview} alt="preview" style={{ width: '100%', maxHeight: '160px', objectFit: 'cover', borderRadius: '10px', border: '1px solid rgba(251,192,89,0.2)' }} />
+                  <button onClick={() => { setImagePreview(null); setForm(f => ({ ...f, image_url: '' })) }}
+                    style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', borderRadius: '50%', width: '22px', height: '22px', cursor: 'pointer', fontSize: '0.7rem' }}>
+                    ✕
+                  </button>
+                </div>
+              )}
+
+              {/* Séparateur */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '12px 0' }}>
+                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+                <span style={{ fontFamily: 'monospace', fontSize: '0.6rem', color: 'rgba(255,255,255,0.2)' }}>OU</span>
+                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+              </div>
+
+              {/* URL manuelle */}
+              <input name="image_url" value={form.image_url} onChange={e => { handleChange(e); setImagePreview(e.target.value) }} placeholder="Coller une URL imgur / autre..." style={inputStyle} />
             </div>
 
             <div>
