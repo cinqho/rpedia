@@ -31,7 +31,7 @@ function About() {
             <div className="rounded-xl p-6 mb-6"
               style={{ background: 'rgba(251,192,89,0.04)', border: '1px solid rgba(251,192,89,0.1)' }}>
               <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                RPedia est une encyclopédie communautaire dédiée aux personnages emblématiques du RP manga.
+                RPedia est une encyclopédie communautaire dédiée aux personnages emblématiques du RP.
                 Ce projet a pour objectif de préserver la mémoire du RP, de raconter les histoires qui ont marqué la communauté,
                 et de rendre hommage aux personnages devenus légendaires au fil des serveurs et des époques.
               </p>

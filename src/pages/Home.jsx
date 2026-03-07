@@ -6,7 +6,7 @@ function Home() {
     <section className="relative flex items-center px-4 md:px-8 overflow-hidden" style={{ height: '100%' }}>
       <KanjiBackground />
       <img
-        src="manga-bg.png"
+        src="home_bg.png"
         style={{
           position: 'absolute',
           inset: 0,
@@ -28,7 +28,7 @@ function Home() {
           <div className="inline-flex items-center gap-2 border text-xs font-mono px-3 py-1.5 md:px-4 md:py-2 rounded-full mb-4 md:mb-6"
             style={{ background: 'rgba(251,192,89,0.05)', borderColor: 'rgba(251,192,89,0.3)', color: '#fbc059' }}>
             <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#fbc059' }} />
-            <span className="hidden sm:inline">Encyclopédie communautaire · </span>RP Manga
+            <span className="hidden sm:inline">Encyclopédie communautaire · </span>RP
           </div>
 
           <h1 className="font-bold text-white leading-tight mb-3 md:mb-4"
@@ -45,7 +45,7 @@ function Home() {
           </p>
           <p className="text-xs md:text-base max-w-md mb-6 md:mb-8 mx-auto md:mx-0"
             style={{ color: 'rgba(255,255,255,0.35)' }}>
-            RPedia est une encyclopédie communautaire dédiée aux personnages emblématiques du RP manga. Chacun peut contribuer et enrichir cette bibliothèque vivante.
+            RPedia est une encyclopédie communautaire dédiée aux personnages emblématiques du RP. Chacun peut contribuer et enrichir cette bibliothèque vivante.
           </p>
 
           <div className="flex flex-row gap-3 md:gap-4 justify-center md:justify-start">

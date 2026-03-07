@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-const kanjiList = ['忍', '力', '夢', '魂', '剣', '闇', '光', '風', '火', '水', '雷', '伝', '説', '英', '雄', '戦', '士', '龍', '鬼', '神']
+const kanjiList = ['△', '▽', '○', '□', '◇', '⬡', '⬢', '✶', '✷', '✸']
 
 function randomBetween(min, max) {
   return Math.random() * (max - min) + min
