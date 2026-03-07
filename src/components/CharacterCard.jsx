@@ -15,7 +15,7 @@ export const rarities = {
   NORMAL:    { label: 'NORMAL',          color: '#9CA3AF', bg: '#1a1a2e', pattern: null,         stars: 0, fullArt: false },
   VETERAN:   { label: '⚔ VÉTÉRAN',       color: '#34D399', bg: '#0a1a12', pattern: null,         stars: 1, fullArt: false },
   ELITE:     { label: '◆ ÉLITE',          color: '#38BDF8', bg: '#0c1a2e', pattern: null,        stars: 2, fullArt: false },
-  EPIQUE:    { label: '✦ ÉPIQUE',         color: '#A855F7', bg: '#120a1a', pattern: 'dots',      stars: 3, fullArt: true  },
+  EPIQUE:    { label: '✦ ÉPIQUE',         color: '#A855F7', bg: '#120a1a', pattern: null,      stars: 3, fullArt: true  },
   SECRET:    { label: '◈ SECRET',         color: '#F472B6', bg: '#050005', pattern: 'dots',      stars: 4, fullArt: true  },
   LEGENDAIRE:{ label: '★ LÉGENDAIRE',     color: '#0205bf', bg: '#00010f', pattern: null,        stars: 5, fullArt: true  },
   ANCESTRAL: { label: '✦ ANCESTRAL',      color: '#FFF9C4', bg: '#0a0800', pattern: null,        stars: 0, fullArt: true  },
