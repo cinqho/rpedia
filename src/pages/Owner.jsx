@@ -1018,10 +1018,12 @@ function CollectionsTab() {
 
   // Création / édition
   const [editMode, setEditMode] = useState(null) // null | 'create' | collection_id
-  const [form, setForm] = useState({ name: '', description: '', cover_url: '', active: true })
+  const [form, setForm] = useState({ name: '', description: '', cover_url: '', accent_color: '#fbc059', active: true })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [coverUploading, setCoverUploading] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(null)
+  const [deleting, setDeleting] = useState(null)
 
   // Assignation persos
   const [selectedCollection, setSelectedCollection] = useState(null)
@@ -1073,10 +1075,10 @@ function CollectionsTab() {
     if (!form.name.trim()) return
     setSaving(true)
     if (editMode === 'create') {
-      const { data } = await supabase.from('collections').insert({ name: form.name, description: form.description, cover_url: form.cover_url, active: form.active }).select().single()
+      const { data } = await supabase.from('collections').insert({ name: form.name, description: form.description, cover_url: form.cover_url, accent_color: form.accent_color, active: form.active }).select().single()
       if (data) setCollections(prev => [{ ...data, card_count: 0 }, ...prev])
     } else {
-      await supabase.from('collections').update({ name: form.name, description: form.description, cover_url: form.cover_url, active: form.active }).eq('id', editMode)
+      await supabase.from('collections').update({ name: form.name, description: form.description, cover_url: form.cover_url, accent_color: form.accent_color, active: form.active }).eq('id', editMode)
       setCollections(prev => prev.map(c => c.id === editMode ? { ...c, ...form } : c))
     }
     setSaving(false)
@@ -1090,9 +1092,12 @@ function CollectionsTab() {
   }
 
   async function deleteCollection(id) {
+    setDeleting(id)
     await supabase.from('collections').delete().eq('id', id)
     setCollections(prev => prev.filter(c => c.id !== id))
     if (selectedCollection?.id === id) setSelectedCollection(null)
+    setConfirmDelete(null)
+    setDeleting(null)
   }
 
   async function assignCollection(charId, collectionId) {
@@ -1121,7 +1126,7 @@ function CollectionsTab() {
       {/* Header + créer */}
       <div className="flex items-center justify-between">
         <p className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>{collections.length} collection{collections.length !== 1 ? 's' : ''}</p>
-        <button onClick={() => { setEditMode('create'); setForm({ name: '', description: '', cover_url: '', active: true }) }}
+        <button onClick={() => { setEditMode('create'); setForm({ name: '', description: '', cover_url: '', accent_color: '#fbc059', active: true }) }}
           className="px-4 py-2 rounded-lg font-mono text-xs font-bold tracking-widest uppercase transition-all hover:opacity-90"
           style={{ background: '#fbc059', color: '#0a0a0a' }}>
           + Nouvelle collection
@@ -1142,6 +1147,17 @@ function CollectionsTab() {
             <div>
               <label style={labelStyle}>Description</label>
               <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} placeholder="Description courte de la collection..." style={{ ...inputStyle, resize: 'none' }} />
+            </div>
+            <div>
+              <label style={labelStyle}>Couleur accent</label>
+              <div className="flex items-center gap-3">
+                <input type="color" value={form.accent_color || '#fbc059'} onChange={e => setForm(f => ({ ...f, accent_color: e.target.value }))}
+                  style={{ width: 44, height: 36, borderRadius: 8, border: '1px solid rgba(255,255,255,0.12)', background: 'transparent', cursor: 'pointer', padding: 2 }} />
+                <input value={form.accent_color || '#fbc059'} onChange={e => setForm(f => ({ ...f, accent_color: e.target.value }))}
+                  placeholder="#fbc059" style={{ ...inputStyle, width: 120 }} />
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: form.accent_color || '#fbc059', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }} />
+                <span className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>couleur du pack dans /packs</span>
+              </div>
             </div>
             <div>
               <label style={labelStyle}>Image de couverture</label>
@@ -1191,6 +1207,7 @@ function CollectionsTab() {
             <div key={col.id} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${col.active ? 'rgba(251,192,89,0.2)' : 'rgba(255,255,255,0.06)'}`, background: 'rgba(255,255,255,0.02)' }}>
               <div className="flex items-center gap-4 px-4 py-3">
                 {col.cover_url && <img src={col.cover_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />}
+                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: col.accent_color || '#fbc059', boxShadow: `0 0 6px ${col.accent_color || '#fbc059'}88` }} />
                 <div className="flex-1 min-w-0">
                   <p className="font-mono font-bold text-sm truncate" style={{ color: col.active ? '#ffffff' : 'rgba(255,255,255,0.4)' }}>{col.name}</p>
                   <p className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>{col.card_count} carte{col.card_count !== 1 ? 's' : ''}</p>
@@ -1203,7 +1220,7 @@ function CollectionsTab() {
                   style={{ background: col.active ? 'rgba(255,45,85,0.08)' : 'rgba(52,211,153,0.08)', border: `1px solid ${col.active ? 'rgba(255,45,85,0.2)' : 'rgba(52,211,153,0.2)'}`, color: col.active ? '#FF2D55' : '#34D399' }}>
                   {col.active ? 'Masquer' : 'Activer'}
                 </button>
-                <button onClick={() => { setEditMode(col.id); setForm({ name: col.name, description: col.description || '', cover_url: col.cover_url || '', active: col.active }) }}
+                <button onClick={() => { setEditMode(col.id); setForm({ name: col.name, description: col.description || '', cover_url: col.cover_url || '', accent_color: col.accent_color || '#fbc059', active: col.active }) }}
                   className="px-3 py-1.5 rounded-lg font-mono text-xs transition-all hover:opacity-80 flex-shrink-0"
                   style={{ background: 'rgba(251,192,89,0.08)', border: '1px solid rgba(251,192,89,0.2)', color: '#fbc059' }}>
                   ✎
@@ -1217,6 +1234,27 @@ function CollectionsTab() {
                   style={{ background: selectedCollection?.id === col.id ? 'rgba(56,189,248,0.15)' : 'rgba(56,189,248,0.05)', border: `1px solid ${selectedCollection?.id === col.id ? 'rgba(56,189,248,0.4)' : 'rgba(56,189,248,0.2)'}`, color: '#38BDF8' }}>
                   {selectedCollection?.id === col.id ? '▲ Fermer' : '🃏 Cartes'}
                 </button>
+                {confirmDelete === col.id ? (
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Supprimer ?</span>
+                    <button onClick={() => deleteCollection(col.id)} disabled={deleting === col.id}
+                      className="px-3 py-1 rounded-lg font-mono text-xs font-bold hover:opacity-90 disabled:opacity-50"
+                      style={{ background: '#FF2D55', color: '#fff' }}>
+                      {deleting === col.id ? '...' : 'Oui'}
+                    </button>
+                    <button onClick={() => setConfirmDelete(null)}
+                      className="px-3 py-1 rounded-lg font-mono text-xs hover:opacity-70"
+                      style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
+                      Non
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmDelete(col.id)}
+                    className="px-3 py-1.5 rounded-lg font-mono text-xs transition-all hover:opacity-80 flex-shrink-0"
+                    style={{ background: 'rgba(255,45,85,0.06)', border: '1px solid rgba(255,45,85,0.15)', color: '#FF2D55' }}>
+                    🗑
+                  </button>
+                )}
               </div>
 
               {/* Panel assignation cartes */}
