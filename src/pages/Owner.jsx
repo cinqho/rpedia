@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 
 const rarityOptions = [
-  'NORMAL', 'VETERAN', 'ELITE', 'EPIQUE', 'LEGEND',
-  'COUP DE COEUR', 'RPEDIA VALIDATION', 'SHINY', 'SECRET'
+  'NORMAL', 'VETERAN', 'ELITE', 'EPIQUE', 'LEGENDAIRE',
+  'SECRET', 'ANCESTRAL', 'ICONE'
 ]
 
 const rarityColors = {
   NORMAL: '#9CA3AF', VETERAN: '#34D399', ELITE: '#38BDF8',
-  EPIQUE: '#A855F7', LEGEND: '#fbc059', 'COUP DE COEUR': '#F472B6',
-  'RPEDIA VALIDATION': '#fbc059', SHINY: '#67E8F9', SECRET: '#F472B6',
+  EPIQUE: '#A855F7', LEGENDAIRE: '#0205bf', SECRET: '#F472B6',
+  ANCESTRAL: '#FFF9C4', ICONE: '#FF1A1A',
 }
 
 const inputStyle = {
@@ -32,6 +32,48 @@ const labelStyle = {
   textTransform: 'uppercase',
   display: 'block',
   marginBottom: '4px',
+}
+
+// ─── Barre de stats ───────────────────────────────────────────────────────────
+function StatsBar() {
+  const [stats, setStats] = useState(null)
+
+  useEffect(() => {
+    async function fetchStats() {
+      const [{ count: totalUsers }, { count: totalCharacters }, { count: approvedCharacters }] = await Promise.all([
+        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('characters').select('*', { count: 'exact', head: true }),
+        supabase.from('characters').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+      ])
+      setStats({ totalUsers, totalCharacters, approvedCharacters })
+    }
+    fetchStats()
+  }, [])
+
+  const items = [
+    { label: 'MEMBRES', value: stats?.totalUsers ?? '…', color: '#fbc059', icon: '👥' },
+    { label: 'PERSONNAGES', value: stats?.totalCharacters ?? '…', color: '#38BDF8', icon: '🃏' },
+    { label: 'APPROUVÉS', value: stats?.approvedCharacters ?? '…', color: '#34D399', icon: '✅' },
+  ]
+
+  return (
+    <div className="grid grid-cols-3 gap-3 mb-6">
+      {items.map(item => (
+        <div key={item.label} className="rounded-xl px-4 py-3 flex items-center gap-3"
+          style={{ background: `${item.color}08`, border: `1px solid ${item.color}22` }}>
+          <span style={{ fontSize: '1.4rem' }}>{item.icon}</span>
+          <div>
+            <p style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.8rem', color: item.color, lineHeight: 1 }}>
+              {stats ? item.value : '…'}
+            </p>
+            <p className="font-mono" style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em' }}>
+              {item.label}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 // ─── Onglet Ressources ────────────────────────────────────────────────────────
@@ -413,6 +455,8 @@ function Owner() {
         </h1>
         <p className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Gestion des ressources, raretés et logs</p>
       </div>
+
+      <StatsBar />
 
       <div className="flex gap-2 mb-6 flex-wrap">
         {[
