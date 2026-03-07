@@ -49,13 +49,14 @@ function CharacterEquilibrageRow({ character, onSave }) {
     stat_pvp: character.stat_pvp,
     stat_lor: character.stat_lor,
     stat_imp: character.stat_imp,
+    rarity:   character.rarity || 'NORMAL',
   })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [markingReady, setMarkingReady] = useState(false)
   const [markedReady, setMarkedReady] = useState(character.status === 'equilibrage_ready')
 
-  const rarityColor = rarityColors[character.rarity] || '#9CA3AF'
+  const rarityColor = rarityColors[stats.rarity] || '#9CA3AF'
 
   function handleStatChange(e) {
     setStats({ ...stats, [e.target.name]: e.target.value })
@@ -70,6 +71,7 @@ function CharacterEquilibrageRow({ character, onSave }) {
         stat_pvp: stats.stat_pvp,
         stat_lor: stats.stat_lor,
         stat_imp: stats.stat_imp,
+        rarity:   stats.rarity,
       })
       .eq('id', character.id)
     setSaving(false)
@@ -87,6 +89,7 @@ function CharacterEquilibrageRow({ character, onSave }) {
       stat_pvp: stats.stat_pvp,
       stat_lor: stats.stat_lor,
       stat_imp: stats.stat_imp,
+      rarity:   stats.rarity,
       status:   'equilibrage_ready',
     }).eq('id', character.id)
     setMarkingReady(false)
@@ -117,7 +120,7 @@ function CharacterEquilibrageRow({ character, onSave }) {
         </div>
         <span className="font-mono text-xs px-2 py-0.5 rounded-full flex-shrink-0"
           style={{ background: `${rarityColor}18`, color: rarityColor, border: `1px solid ${rarityColor}44` }}>
-          {character.rarity || 'NORMAL'}
+          {stats.rarity}
         </span>
         {markedReady ? (
           <span className="font-mono text-xs px-2 py-0.5 rounded-full flex-shrink-0 font-bold"
@@ -158,7 +161,18 @@ function CharacterEquilibrageRow({ character, onSave }) {
 
           <div className="mb-4">
             <p style={{ ...labelStyle, marginBottom: '10px' }}>Stats (modifiables)</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              {/* RARETÉ AJOUTÉE ICI */}
+              <div>
+                <label style={labelStyle}>Rareté</label>
+                <select name="rarity" value={stats.rarity} onChange={handleStatChange}
+                  style={{ ...inputStyle, color: rarityColor, borderColor: `${rarityColor}44` }}>
+                  {Object.keys(rarityColors).map(r => (
+                    <option key={r} value={r} style={{ background: '#0a0a0a', color: rarityColors[r] }}>{r}</option>
+                  ))}
+                </select>
+              </div>
+
               {[
                 { name: 'stat_rp',  label: 'RP' },
                 { name: 'stat_pvp', label: 'PVP' },
@@ -281,7 +295,7 @@ function Equilibrage() {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-6">
         <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '2.5rem', color: '#ffffff' }}>
-          PANEL <span style={{ color: '#38BDF8' }}>ÉQUILIBRAGE</span>
+          PANEL <span style={{ color: '#fbc059' }}>ÉQUILIBRAGE</span>
         </h1>
         <p className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
           {enCours.length} en cours · {ready.length} prêtes à approuver
