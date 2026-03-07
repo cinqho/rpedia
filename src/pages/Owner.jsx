@@ -568,6 +568,228 @@ function StatusLogsTab() {
   )
 }
 
+
+// ─── Onglet Donner une carte ──────────────────────────────────────────────────
+function GiveCardTab() {
+  const [playerSearch, setPlayerSearch] = useState('')
+  const [playerResults, setPlayerResults] = useState([])
+  const [selectedPlayer, setSelectedPlayer] = useState(null)
+
+  const [cardSearch, setCardSearch] = useState('')
+  const [cardResults, setCardResults] = useState([])
+  const [selectedCard, setSelectedCard] = useState(null)
+
+  const [giving, setGiving] = useState(false)
+  const [given, setGiven] = useState(false)
+  const [error, setError] = useState(null)
+  const [confirmGive, setConfirmGive] = useState(false)
+
+  const rarityColors = {
+    NORMAL: '#9CA3AF', VETERAN: '#34D399', ELITE: '#38BDF8',
+    EPIQUE: '#A855F7', LEGENDAIRE: '#0205bf', SECRET: '#F472B6',
+    ANCESTRAL: '#FFF9C4', ICONE: '#FF1A1A',
+  }
+
+  async function searchPlayers(val) {
+    setPlayerSearch(val)
+    setSelectedPlayer(null)
+    setConfirmGive(false)
+    if (val.trim().length < 2) return setPlayerResults([])
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, discord_username, avatar_url')
+      .ilike('discord_username', `%${val.trim()}%`)
+      .limit(6)
+    setPlayerResults(data || [])
+  }
+
+  async function searchCards(val) {
+    setCardSearch(val)
+    setSelectedCard(null)
+    setConfirmGive(false)
+    if (val.trim().length < 2) return setCardResults([])
+    const { data } = await supabase
+      .from('characters')
+      .select('id, rp_name, server, rarity, image_url')
+      .eq('status', 'approved')
+      .ilike('rp_name', `%${val.trim()}%`)
+      .limit(6)
+    setCardResults(data || [])
+  }
+
+  async function giveCard() {
+    if (!selectedPlayer || !selectedCard) return
+    setGiving(true)
+    setError(null)
+
+    // Vérifier si le joueur a déjà cette carte
+    const { data: existing } = await supabase
+      .from('deck')
+      .select('id')
+      .eq('user_id', selectedPlayer.id)
+      .eq('character_id', selectedCard.id)
+      .limit(1)
+
+    if (existing && existing.length > 0) {
+      setError(`${selectedPlayer.discord_username} possède déjà cette carte.`)
+      setGiving(false)
+      setConfirmGive(false)
+      return
+    }
+
+    const { error: err } = await supabase.from('deck').insert({
+      user_id: selectedPlayer.id,
+      character_id: selectedCard.id,
+      obtained_at: new Date().toISOString(),
+    })
+
+    if (err) setError(err.message)
+    else {
+      setGiven(true)
+      setConfirmGive(false)
+      setTimeout(() => {
+        setGiven(false)
+        setSelectedPlayer(null)
+        setSelectedCard(null)
+        setPlayerSearch('')
+        setCardSearch('')
+        setPlayerResults([])
+        setCardResults([])
+      }, 2500)
+    }
+    setGiving(false)
+  }
+
+  const color = selectedCard ? (rarityColors[selectedCard.rarity] || '#9CA3AF') : '#fbc059'
+
+  return (
+    <div className="flex flex-col gap-6 max-w-xl">
+
+      {/* Sélection joueur */}
+      <div>
+        <label style={labelStyle}>1. Choisir un joueur</label>
+        <input
+          value={playerSearch}
+          onChange={e => searchPlayers(e.target.value)}
+          placeholder="Rechercher par pseudo Discord..."
+          style={{
+            ...inputStyle,
+            borderColor: selectedPlayer ? '#34D399' : 'rgba(255,255,255,0.12)',
+          }}
+        />
+        {playerResults.length > 0 && !selectedPlayer && (
+          <div className="mt-1 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)', background: '#0f0f0f' }}>
+            {playerResults.map(p => (
+              <div key={p.id}
+                className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-white/5 transition-all"
+                onClick={() => { setSelectedPlayer(p); setPlayerSearch(p.discord_username); setPlayerResults([]) }}>
+                {p.avatar_url
+                  ? <img src={p.avatar_url} alt="" className="w-7 h-7 rounded-full flex-shrink-0" />
+                  : <div className="w-7 h-7 rounded-full flex-shrink-0" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                }
+                <span className="font-mono text-sm" style={{ color: '#fff' }}>{p.discord_username}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {selectedPlayer && (
+          <div className="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg" style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)' }}>
+            {selectedPlayer.avatar_url && <img src={selectedPlayer.avatar_url} alt="" className="w-6 h-6 rounded-full" />}
+            <span className="font-mono text-xs" style={{ color: '#34D399' }}>✓ {selectedPlayer.discord_username}</span>
+            <button onClick={() => { setSelectedPlayer(null); setPlayerSearch(''); setConfirmGive(false) }}
+              className="ml-auto font-mono text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>✕</button>
+          </div>
+        )}
+      </div>
+
+      {/* Sélection carte */}
+      <div>
+        <label style={labelStyle}>2. Choisir une carte</label>
+        <input
+          value={cardSearch}
+          onChange={e => searchCards(e.target.value)}
+          placeholder="Rechercher par nom de personnage..."
+          style={{
+            ...inputStyle,
+            borderColor: selectedCard ? color : 'rgba(255,255,255,0.12)',
+          }}
+        />
+        {cardResults.length > 0 && !selectedCard && (
+          <div className="mt-1 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)', background: '#0f0f0f' }}>
+            {cardResults.map(c => {
+              const rc = rarityColors[c.rarity] || '#9CA3AF'
+              return (
+                <div key={c.id}
+                  className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-white/5 transition-all"
+                  onClick={() => { setSelectedCard(c); setCardSearch(c.rp_name); setCardResults([]) }}>
+                  {c.image_url
+                    ? <img src={c.image_url} alt="" className="w-7 h-7 rounded-lg object-cover object-top flex-shrink-0" />
+                    : <div className="w-7 h-7 rounded-lg flex-shrink-0" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                  }
+                  <div className="flex-1 min-w-0">
+                    <span className="font-mono text-sm" style={{ color: '#fff' }}>{c.rp_name}</span>
+                    <span className="font-mono text-xs ml-2" style={{ color: 'rgba(255,255,255,0.3)' }}>{c.server}</span>
+                  </div>
+                  <span className="font-mono text-xs px-2 py-0.5 rounded-full flex-shrink-0"
+                    style={{ background: `${rc}18`, color: rc, border: `1px solid ${rc}44` }}>
+                    {c.rarity || 'NORMAL'}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+        {selectedCard && (
+          <div className="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg" style={{ background: `${color}08`, border: `1px solid ${color}22` }}>
+            {selectedCard.image_url && <img src={selectedCard.image_url} alt="" className="w-6 h-6 rounded-lg object-cover object-top" />}
+            <span className="font-mono text-xs" style={{ color }}>✓ {selectedCard.rp_name}</span>
+            <span className="font-mono text-xs ml-1" style={{ color: 'rgba(255,255,255,0.3)' }}>— {selectedCard.rarity || 'NORMAL'}</span>
+            <button onClick={() => { setSelectedCard(null); setCardSearch(''); setConfirmGive(false) }}
+              className="ml-auto font-mono text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>✕</button>
+          </div>
+        )}
+      </div>
+
+      {/* Résumé + confirmation */}
+      {selectedPlayer && selectedCard && !given && (
+        <div className="p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <p className="font-mono text-xs mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            Donner <span style={{ color }}>{selectedCard.rp_name}</span> ({selectedCard.rarity || 'NORMAL'}) à <span style={{ color: '#34D399' }}>{selectedPlayer.discord_username}</span>
+          </p>
+          {error && <p className="font-mono text-xs mb-3" style={{ color: '#FF2D55' }}>{error}</p>}
+          {!confirmGive ? (
+            <button onClick={() => setConfirmGive(true)}
+              className="px-6 py-2 rounded-lg font-mono text-xs font-bold tracking-widest uppercase transition-all hover:opacity-90"
+              style={{ background: '#fbc059', color: '#0a0a0a' }}>
+              Donner la carte
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Confirmer ?</span>
+              <button onClick={giveCard} disabled={giving}
+                className="px-4 py-1.5 rounded-lg font-mono text-xs font-bold transition-all hover:opacity-90 disabled:opacity-50"
+                style={{ background: '#34D399', color: '#0a0a0a' }}>
+                {giving ? '...' : '✓ Confirmer'}
+              </button>
+              <button onClick={() => setConfirmGive(false)}
+                className="px-3 py-1.5 rounded-lg font-mono text-xs transition-all hover:opacity-70"
+                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
+                Annuler
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {given && (
+        <div className="p-4 rounded-xl text-center" style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)' }}>
+          <p className="font-mono text-sm" style={{ color: '#34D399' }}>✓ Carte donnée avec succès !</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Page Owner ───────────────────────────────────────────────────────────────
 function Owner() {
   const [user, setUser] = useState(null)
@@ -621,6 +843,7 @@ function Owner() {
           { key: 'rarities', label: '✦ Raretés des cartes' },
           { key: 'rarity-logs', label: '📋 Logs raretés' },
           { key: 'status-logs', label: '📋 Logs status' },
+          { key: 'give-card', label: '🎁 Donner une carte' },
         ].map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className="px-4 py-2 rounded-xl font-mono text-xs font-bold tracking-wider transition-all duration-200"
@@ -638,6 +861,7 @@ function Owner() {
       {tab === 'rarities' && <RaritiesTab />}
       {tab === 'rarity-logs' && <RarityLogsTab />}
       {tab === 'status-logs' && <StatusLogsTab />}
+      {tab === 'give-card' && <GiveCardTab />}
     </div>
   )
 }
