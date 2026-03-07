@@ -176,7 +176,7 @@ function Sidebar() {
       .select('role')
       .eq('user_id', userId)
       .single()
-    setIsAdmin(!!data)
+    setIsAdmin(!!data && data.role !== 'equilibrage')
     setIsOwner(data?.role === 'owner')
     setIsEquilibrage(data?.role === 'equilibrage' || data?.role === 'owner')
   }
