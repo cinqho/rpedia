@@ -1010,6 +1010,270 @@ function TeamTab() {
   )
 }
 
+
+// ─── Onglet Collections ───────────────────────────────────────────────────────
+function CollectionsTab() {
+  const [collections, setCollections] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  // Création / édition
+  const [editMode, setEditMode] = useState(null) // null | 'create' | collection_id
+  const [form, setForm] = useState({ name: '', description: '', cover_url: '', active: true })
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [coverUploading, setCoverUploading] = useState(false)
+
+  // Assignation persos
+  const [selectedCollection, setSelectedCollection] = useState(null)
+  const [characters, setCharacters] = useState([])
+  const [charsLoading, setCharsLoading] = useState(false)
+  const [charSearch, setCharSearch] = useState('')
+  const [filterServer, setFilterServer] = useState('all')
+  const [servers, setServers] = useState([])
+  const [assigningSaving, setAssigningSaving] = useState(null)
+
+  useEffect(() => { fetchCollections() }, [])
+
+  async function fetchCollections() {
+    setLoading(true)
+    const { data } = await supabase.from('collections').select('*').order('created_at', { ascending: false })
+    const { data: chars } = await supabase.from('characters').select('collection_id').eq('status', 'approved').not('collection_id', 'is', null)
+    const counts = {}
+    for (const c of chars || []) counts[c.collection_id] = (counts[c.collection_id] || 0) + 1
+    setCollections((data || []).map(col => ({ ...col, card_count: counts[col.id] || 0 })))
+    setLoading(false)
+  }
+
+  async function fetchCharacters() {
+    setCharsLoading(true)
+    const { data } = await supabase.from('characters').select('id, rp_name, server, rarity, image_url, collection_id').eq('status', 'approved').order('rp_name')
+    setCharacters(data || [])
+    const unique = [...new Set((data || []).map(c => c.server?.trim()).filter(Boolean))].sort()
+    setServers(unique)
+    setCharsLoading(false)
+  }
+
+  async function handleCoverUpload(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    setCoverUploading(true)
+    const data = new FormData()
+    data.append('file', file)
+    data.append('upload_preset', 'RPedia')
+    data.append('cloud_name', 'dzll8uy9f')
+    try {
+      const res = await fetch('https://api.cloudinary.com/v1_1/dzll8uy9f/image/upload', { method: 'POST', body: data })
+      const json = await res.json()
+      if (json.secure_url) setForm(f => ({ ...f, cover_url: json.secure_url }))
+    } catch {}
+    setCoverUploading(false)
+  }
+
+  async function saveCollection() {
+    if (!form.name.trim()) return
+    setSaving(true)
+    if (editMode === 'create') {
+      const { data } = await supabase.from('collections').insert({ name: form.name, description: form.description, cover_url: form.cover_url, active: form.active }).select().single()
+      if (data) setCollections(prev => [{ ...data, card_count: 0 }, ...prev])
+    } else {
+      await supabase.from('collections').update({ name: form.name, description: form.description, cover_url: form.cover_url, active: form.active }).eq('id', editMode)
+      setCollections(prev => prev.map(c => c.id === editMode ? { ...c, ...form } : c))
+    }
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => { setSaved(false); setEditMode(null) }, 1500)
+  }
+
+  async function toggleActive(col) {
+    await supabase.from('collections').update({ active: !col.active }).eq('id', col.id)
+    setCollections(prev => prev.map(c => c.id === col.id ? { ...c, active: !col.active } : c))
+  }
+
+  async function deleteCollection(id) {
+    await supabase.from('collections').delete().eq('id', id)
+    setCollections(prev => prev.filter(c => c.id !== id))
+    if (selectedCollection?.id === id) setSelectedCollection(null)
+  }
+
+  async function assignCollection(charId, collectionId) {
+    setAssigningSaving(charId)
+    await supabase.from('characters').update({ collection_id: collectionId || null }).eq('id', charId)
+    setCharacters(prev => prev.map(c => c.id === charId ? { ...c, collection_id: collectionId || null } : c))
+    // Recalculer card_count
+    setCollections(prev => prev.map(col => {
+      if (col.id === collectionId) return { ...col, card_count: (col.card_count || 0) + 1 }
+      return col
+    }))
+    setAssigningSaving(null)
+  }
+
+  const rarityColors = { NORMAL: '#9CA3AF', VETERAN: '#34D399', ELITE: '#38BDF8', EPIQUE: '#A855F7', SECRET: '#F472B6', LEGENDAIRE: '#0205bf', ANCESTRAL: '#FFF9C4', ICONE: '#FF1A1A' }
+
+  const filteredChars = characters.filter(c => {
+    const matchSearch = !charSearch || c.rp_name?.toLowerCase().includes(charSearch.toLowerCase())
+    const matchServer = filterServer === 'all' || c.server === filterServer
+    return matchSearch && matchServer
+  })
+
+  return (
+    <div className="flex flex-col gap-6">
+
+      {/* Header + créer */}
+      <div className="flex items-center justify-between">
+        <p className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>{collections.length} collection{collections.length !== 1 ? 's' : ''}</p>
+        <button onClick={() => { setEditMode('create'); setForm({ name: '', description: '', cover_url: '', active: true }) }}
+          className="px-4 py-2 rounded-lg font-mono text-xs font-bold tracking-widest uppercase transition-all hover:opacity-90"
+          style={{ background: '#fbc059', color: '#0a0a0a' }}>
+          + Nouvelle collection
+        </button>
+      </div>
+
+      {/* Formulaire création / édition */}
+      {editMode && (
+        <div className="p-4 rounded-xl" style={{ background: 'rgba(251,192,89,0.05)', border: '1px solid rgba(251,192,89,0.2)' }}>
+          <p className="font-mono text-xs font-bold mb-4" style={{ color: '#fbc059' }}>
+            {editMode === 'create' ? '➕ NOUVELLE COLLECTION' : '✎ MODIFIER'}
+          </p>
+          <div className="flex flex-col gap-3">
+            <div>
+              <label style={labelStyle}>Nom *</label>
+              <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="ex: Konoha Arc 1" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Description</label>
+              <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} placeholder="Description courte de la collection..." style={{ ...inputStyle, resize: 'none' }} />
+            </div>
+            <div>
+              <label style={labelStyle}>Image de couverture</label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '8px', cursor: 'pointer', border: '1px dashed rgba(251,192,89,0.3)', background: 'rgba(251,192,89,0.04)', color: coverUploading ? 'rgba(255,255,255,0.3)' : '#fbc059', fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                <input type="file" accept="image/*" onChange={handleCoverUpload} style={{ display: 'none' }} disabled={coverUploading} />
+                {coverUploading ? '⏳ Upload...' : '📁 Choisir une image'}
+              </label>
+              {form.cover_url && (
+                <div className="mt-2 flex items-center gap-2">
+                  <img src={form.cover_url} alt="" style={{ width: 60, height: 40, objectFit: 'cover', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)' }} />
+                  <button onClick={() => setForm(f => ({ ...f, cover_url: '' }))} className="font-mono text-xs" style={{ color: '#FF2D55' }}>✕ Retirer</button>
+                </div>
+              )}
+              <input value={form.cover_url} onChange={e => setForm(f => ({ ...f, cover_url: e.target.value }))} placeholder="Ou coller une URL..." style={{ ...inputStyle, marginTop: 8 }} />
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="cursor-pointer flex items-center gap-2" onClick={() => setForm(f => ({ ...f, active: !f.active }))}>
+                <div className="w-4 h-4 rounded flex items-center justify-center" style={{ background: form.active ? '#34D399' : 'transparent', border: `1px solid ${form.active ? '#34D399' : 'rgba(255,255,255,0.2)'}` }}>
+                  {form.active && <span style={{ color: '#0a0a0a', fontSize: '0.7rem' }}>✓</span>}
+                </div>
+                <span className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>Visible dans les packs</span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={saveCollection} disabled={saving || !form.name.trim()}
+                className="px-6 py-2 rounded-lg font-mono text-xs font-bold uppercase tracking-widest transition-all hover:opacity-90 disabled:opacity-40"
+                style={{ background: saved ? '#34D399' : '#fbc059', color: '#0a0a0a' }}>
+                {saving ? '...' : saved ? '✓ Sauvegardé' : 'Sauvegarder'}
+              </button>
+              <button onClick={() => setEditMode(null)} className="px-4 py-2 rounded-lg font-mono text-xs transition-all hover:opacity-70"
+                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Liste collections */}
+      {loading ? (
+        <p className="font-mono text-xs text-center py-8" style={{ color: 'rgba(255,255,255,0.3)' }}>Chargement...</p>
+      ) : collections.length === 0 ? (
+        <p className="font-mono text-xs text-center py-8" style={{ color: 'rgba(255,255,255,0.3)' }}>Aucune collection. Crées-en une !</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {collections.map(col => (
+            <div key={col.id} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${col.active ? 'rgba(251,192,89,0.2)' : 'rgba(255,255,255,0.06)'}`, background: 'rgba(255,255,255,0.02)' }}>
+              <div className="flex items-center gap-4 px-4 py-3">
+                {col.cover_url && <img src={col.cover_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />}
+                <div className="flex-1 min-w-0">
+                  <p className="font-mono font-bold text-sm truncate" style={{ color: col.active ? '#ffffff' : 'rgba(255,255,255,0.4)' }}>{col.name}</p>
+                  <p className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>{col.card_count} carte{col.card_count !== 1 ? 's' : ''}</p>
+                </div>
+                <span className="font-mono text-xs px-2 py-0.5 rounded-full flex-shrink-0"
+                  style={{ background: col.active ? 'rgba(52,211,153,0.1)' : 'rgba(255,255,255,0.05)', color: col.active ? '#34D399' : 'rgba(255,255,255,0.3)', border: `1px solid ${col.active ? 'rgba(52,211,153,0.3)' : 'rgba(255,255,255,0.1)'}` }}>
+                  {col.active ? 'visible' : 'masqué'}
+                </span>
+                <button onClick={() => toggleActive(col)} className="px-3 py-1.5 rounded-lg font-mono text-xs transition-all hover:opacity-80 flex-shrink-0"
+                  style={{ background: col.active ? 'rgba(255,45,85,0.08)' : 'rgba(52,211,153,0.08)', border: `1px solid ${col.active ? 'rgba(255,45,85,0.2)' : 'rgba(52,211,153,0.2)'}`, color: col.active ? '#FF2D55' : '#34D399' }}>
+                  {col.active ? 'Masquer' : 'Activer'}
+                </button>
+                <button onClick={() => { setEditMode(col.id); setForm({ name: col.name, description: col.description || '', cover_url: col.cover_url || '', active: col.active }) }}
+                  className="px-3 py-1.5 rounded-lg font-mono text-xs transition-all hover:opacity-80 flex-shrink-0"
+                  style={{ background: 'rgba(251,192,89,0.08)', border: '1px solid rgba(251,192,89,0.2)', color: '#fbc059' }}>
+                  ✎
+                </button>
+                <button
+                  onClick={() => {
+                    if (selectedCollection?.id === col.id) { setSelectedCollection(null) }
+                    else { setSelectedCollection(col); fetchCharacters() }
+                  }}
+                  className="px-3 py-1.5 rounded-lg font-mono text-xs transition-all hover:opacity-80 flex-shrink-0"
+                  style={{ background: selectedCollection?.id === col.id ? 'rgba(56,189,248,0.15)' : 'rgba(56,189,248,0.05)', border: `1px solid ${selectedCollection?.id === col.id ? 'rgba(56,189,248,0.4)' : 'rgba(56,189,248,0.2)'}`, color: '#38BDF8' }}>
+                  {selectedCollection?.id === col.id ? '▲ Fermer' : '🃏 Cartes'}
+                </button>
+              </div>
+
+              {/* Panel assignation cartes */}
+              {selectedCollection?.id === col.id && (
+                <div className="px-4 pb-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                  <p className="font-mono text-xs font-bold mt-3 mb-3" style={{ color: '#38BDF8' }}>ASSIGNER DES PERSONNAGES À "{col.name}"</p>
+                  <div className="flex gap-3 mb-3 flex-wrap">
+                    <input value={charSearch} onChange={e => setCharSearch(e.target.value)} placeholder="Rechercher..."
+                      style={{ ...inputStyle, flex: 1, minWidth: '140px' }} />
+                    <select value={filterServer} onChange={e => setFilterServer(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
+                      <option value="all" style={{ background: '#0a0a0a' }}>Tous les serveurs</option>
+                      {servers.map(s => <option key={s} value={s} style={{ background: '#0a0a0a' }}>{s}</option>)}
+                    </select>
+                  </div>
+                  {charsLoading ? (
+                    <p className="font-mono text-xs text-center py-4" style={{ color: 'rgba(255,255,255,0.3)' }}>Chargement...</p>
+                  ) : (
+                    <div className="flex flex-col gap-1.5 max-h-72 overflow-y-auto pr-1">
+                      {filteredChars.map(c => {
+                        const rc = rarityColors[c.rarity] || '#9CA3AF'
+                        const inThisCol = c.collection_id === col.id
+                        const inOtherCol = c.collection_id && c.collection_id !== col.id
+                        const otherColName = inOtherCol ? collections.find(x => x.id === c.collection_id)?.name : null
+                        return (
+                          <div key={c.id} className="flex items-center gap-3 px-3 py-2 rounded-lg"
+                            style={{ background: inThisCol ? 'rgba(56,189,248,0.06)' : 'rgba(255,255,255,0.02)', border: `1px solid ${inThisCol ? 'rgba(56,189,248,0.2)' : 'rgba(255,255,255,0.04)'}` }}>
+                            {c.image_url && <img src={c.image_url} alt="" className="w-6 h-6 rounded object-cover object-top flex-shrink-0" />}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-mono text-xs font-bold truncate" style={{ color: '#fff' }}>{c.rp_name}</p>
+                              {inOtherCol && <p className="font-mono" style={{ fontSize: '0.55rem', color: '#fbc059' }}>Dans : {otherColName}</p>}
+                            </div>
+                            <span className="font-mono text-xs px-1.5 py-0.5 rounded flex-shrink-0"
+                              style={{ background: `${rc}18`, color: rc, fontSize: '0.6rem' }}>
+                              {c.rarity || 'NORMAL'}
+                            </span>
+                            <button
+                              onClick={() => assignCollection(c.id, inThisCol ? null : col.id)}
+                              disabled={assigningSaving === c.id}
+                              className="px-3 py-1 rounded font-mono text-xs font-bold transition-all hover:opacity-90 disabled:opacity-50 flex-shrink-0"
+                              style={{ background: inThisCol ? 'rgba(255,45,85,0.1)' : 'rgba(56,189,248,0.1)', color: inThisCol ? '#FF2D55' : '#38BDF8', border: `1px solid ${inThisCol ? 'rgba(255,45,85,0.3)' : 'rgba(56,189,248,0.3)'}`, minWidth: 60 }}>
+                              {assigningSaving === c.id ? '...' : inThisCol ? '✕ Retirer' : '+ Ajouter'}
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Page Owner ───────────────────────────────────────────────────────────────
 function Owner() {
   const [user, setUser] = useState(null)
@@ -1065,6 +1329,7 @@ function Owner() {
           { key: 'status-logs', label: '📋 Logs status' },
           { key: 'give-card', label: '🎁 Donner une carte' },
           { key: 'team', label: '👥 Équipe' },
+          { key: 'collections', label: '📦 Collections' },
         ].map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className="px-4 py-2 rounded-xl font-mono text-xs font-bold tracking-wider transition-all duration-200"
@@ -1084,6 +1349,7 @@ function Owner() {
       {tab === 'status-logs' && <StatusLogsTab />}
       {tab === 'give-card' && <GiveCardTab />}
       {tab === 'team' && <TeamTab />}
+      {tab === 'collections' && <CollectionsTab />}
     </div>
   )
 }

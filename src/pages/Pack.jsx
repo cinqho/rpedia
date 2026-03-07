@@ -1,26 +1,20 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
-import CharacterCard, { rollRarity, rarities, RARITY_WEIGHTS } from '../components/CharacterCard'
+import CharacterCard, { rarities, RARITY_WEIGHTS } from '../components/CharacterCard'
 
-// 🔧 MAINTENANCE — mettre à true pour désactiver les packs
 const PACKS_DISABLED = false
 
 function DropRates() {
   const [open, setOpen] = useState(false)
-
   const totalWeight = RARITY_WEIGHTS.reduce((sum, r) => sum + r.weight, 0)
-
   return (
     <div className="mt-6">
-      <button
-        onClick={() => setOpen(o => !o)}
+      <button onClick={() => setOpen(o => !o)}
         className="font-mono text-xs tracking-widest flex items-center gap-2 transition-all duration-200 hover:opacity-80"
-        style={{ color: 'rgba(255,255,255,0.3)' }}
-      >
+        style={{ color: 'rgba(255,255,255,0.3)' }}>
         <span style={{ color: '#fbc059' }}>{open ? '▼' : '▶'}</span>
         TAUX DE DROP
       </button>
-
       {open && (
         <div className="mt-3 rounded-xl p-4 max-h-80 overflow-y-auto" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="flex flex-col gap-3">
@@ -54,8 +48,6 @@ function HowToGetPacks() {
     <div className="mt-6 rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
       <p className="font-mono text-[10px] tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.25)' }}>COMMENT OBTENIR DES PACKS ?</p>
       <div className="flex flex-col gap-3">
-
-        {/* Connexion quotidienne */}
         <div className="flex items-start gap-3">
           <span style={{ fontSize: '1.1rem', lineHeight: 1.2 }}>📅</span>
           <div>
@@ -65,11 +57,7 @@ function HowToGetPacks() {
             </p>
           </div>
         </div>
-
-        {/* Séparateur */}
         <div style={{ height: 1, background: 'rgba(255,255,255,0.04)' }} />
-
-        {/* Discord */}
         <div className="flex items-start gap-3">
           <span style={{ fontSize: '1.1rem', lineHeight: 1.2 }}>💬</span>
           <div>
@@ -79,17 +67,13 @@ function HowToGetPacks() {
             </p>
           </div>
         </div>
-
       </div>
     </div>
   )
 }
 
-function Booster({ server, selected, onClick, disabled }) {
-  const isGeneral = server === 'general'
-  const accent = isGeneral ? '#fbc059' : '#7c6fff'
-  const label = isGeneral ? 'GÉNÉRAL' : server.toUpperCase()
-
+function CollectionBooster({ collection, selected, onClick, disabled }) {
+  const accent = collection.accent_color || '#fbc059'
   return (
     <div
       onClick={!disabled ? onClick : undefined}
@@ -98,26 +82,46 @@ function Booster({ server, selected, onClick, disabled }) {
         overflow: 'hidden',
         boxShadow: selected ? `0 0 30px ${accent}88` : `0 0 10px ${accent}22`,
         border: `2px solid ${selected ? accent : accent + '44'}`,
-        background: `linear-gradient(160deg, #1a1a2e 0%, #0f0f1a 40%, #1a1a2e 100%)`,
+        background: collection.cover_url
+          ? `linear-gradient(160deg, #0a0a0a88 0%, #0a0a0acc 100%)`
+          : `linear-gradient(160deg, #1a1a2e 0%, #0f0f1a 40%, #1a1a2e 100%)`,
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.4 : 1,
         transition: 'all 0.2s ease',
         transform: selected ? 'scale(1.04)' : 'scale(1)',
       }}
     >
+      {/* Image de fond */}
+      {collection.cover_url && (
+        <img src={collection.cover_url} alt=""
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.25 }} />
+      )}
+
       <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 50% 30%, ${accent}22 0%, transparent 70%)` }} />
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }} />
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }} />
-      <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', fontFamily: 'Bebas Neue, sans-serif', fontSize: 10, letterSpacing: '0.3em', color: accent, background: `${accent}18`, border: `1px solid ${accent}44`, padding: '2px 8px', borderRadius: 4, whiteSpace: 'nowrap' }}>PACK</div>
-      <div style={{ position: 'absolute', top: '38%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: 48, filter: `drop-shadow(0 0 16px ${accent})`, lineHeight: 1 }}>
-        {isGeneral ? '🌍' : '⚔️'}
+
+      <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', fontFamily: 'Bebas Neue, sans-serif', fontSize: 10, letterSpacing: '0.3em', color: accent, background: `${accent}18`, border: `1px solid ${accent}44`, padding: '2px 8px', borderRadius: 4, whiteSpace: 'nowrap' }}>
+        COLLECTION
       </div>
-      <div style={{ position: 'absolute', bottom: 36, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 3 }}>
-        {['-6deg', '0deg', '6deg'].map((rot, i) => (
-          <div key={i} style={{ width: 22, height: 32, background: `linear-gradient(135deg, ${accent}33, ${accent}11)`, border: `1px solid ${accent}55`, borderRadius: 3, transform: `rotate(${rot})` }} />
+
+      {/* Cartes décoratives */}
+      <div style={{ position: 'absolute', top: '35%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', gap: 4 }}>
+        {['-8deg', '0deg', '8deg'].map((rot, i) => (
+          <div key={i} style={{ width: 28, height: 40, background: `linear-gradient(135deg, ${accent}44, ${accent}11)`, border: `1px solid ${accent}66`, borderRadius: 4, transform: `rotate(${rot})`, boxShadow: `0 0 8px ${accent}33` }} />
         ))}
       </div>
-      <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', fontFamily: 'Bebas Neue, sans-serif', fontSize: 14, letterSpacing: '0.2em', color: '#ffffff', whiteSpace: 'nowrap', textShadow: `0 0 10px ${accent}` }}>{label}</div>
+
+      <div style={{ position: 'absolute', bottom: 36, left: 8, right: 8, textAlign: 'center' }}>
+        <p style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 15, letterSpacing: '0.15em', color: '#ffffff', textShadow: `0 0 10px ${accent}`, lineHeight: 1.2, wordBreak: 'break-word' }}>
+          {collection.name}
+        </p>
+      </div>
+
+      <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', fontFamily: 'monospace', fontSize: 9, color: `${accent}88`, whiteSpace: 'nowrap' }}>
+        {collection.card_count ?? '?'} cartes
+      </div>
+
       {selected && <div style={{ position: 'absolute', inset: 0, background: `${accent}08`, borderRadius: 14 }} />}
     </div>
   )
@@ -130,8 +134,8 @@ function Pack() {
   const [cards, setCards] = useState([])
   const [revealedCards, setRevealedCards] = useState([])
   const [phase, setPhase] = useState('idle')
-  const [servers, setServers] = useState([])
-  const [selectedServer, setSelectedServer] = useState(null)
+  const [collections, setCollections] = useState([])
+  const [selectedCollection, setSelectedCollection] = useState(null)
   const [dailyClaimed, setDailyClaimed] = useState(false)
 
   useEffect(() => {
@@ -140,13 +144,29 @@ function Pack() {
       setUser(u)
       if (u) fetchResources(u.id)
     })
-    fetchServers()
+    fetchCollections()
   }, [])
 
-  async function fetchServers() {
-    const { data } = await supabase.from('characters').select('server').eq('status', 'approved')
-    const unique = [...new Set((data || []).map(c => c.server).filter(Boolean))]
-    setServers(unique)
+  async function fetchCollections() {
+    const { data } = await supabase
+      .from('collections')
+      .select('*')
+      .eq('active', true)
+      .order('created_at', { ascending: false })
+
+    // Compter les persos par collection
+    const { data: chars } = await supabase
+      .from('characters')
+      .select('collection_id')
+      .eq('status', 'approved')
+      .not('collection_id', 'is', null)
+
+    const counts = {}
+    for (const c of chars || []) {
+      counts[c.collection_id] = (counts[c.collection_id] || 0) + 1
+    }
+
+    setCollections((data || []).map(col => ({ ...col, card_count: counts[col.id] || 0 })))
   }
 
   async function fetchResources(userId) {
@@ -157,8 +177,6 @@ function Pack() {
       const { data: newData } = await supabase.from('resources').insert([{ user_id: userId, packs_available: 1 }]).select().maybeSingle()
       setResources(newData)
     }
-
-    // Réclame les packs quotidiens automatiquement
     const { data: daily } = await supabase.rpc('claim_daily_packs', { p_user_id: userId })
     if (daily?.claimed) {
       setResources(prev => ({ ...prev, packs_available: daily.packs_available }))
@@ -166,20 +184,22 @@ function Pack() {
     }
   }
 
-  async function openPackFor(server) {
-    if (!user || !resources || resources.packs_available <= 0 || !server) return
+  async function openPack(collection) {
+    if (!user || !resources || resources.packs_available <= 0) return
     setLoading(true)
+    setSelectedCollection(collection.id)
 
-    const { data, error } = await supabase.rpc('open_pack', {
+    const { data, error } = await supabase.rpc('open_pack_collection', {
       p_user_id: user.id,
-      p_server:  server,
+      p_collection_id: collection.id,
     })
 
     if (error || data?.error) {
       setLoading(false)
+      setSelectedCollection(null)
       const msg = data?.message || error?.message || 'Erreur inconnue'
-      if (data?.error === 'no_packs')      return alert('Tu n\'as plus de packs !')
-      if (data?.error === 'no_characters') return alert('Aucun personnage disponible sur ce serveur.')
+      if (data?.error === 'no_packs') return alert('Tu n\'as plus de packs !')
+      if (data?.error === 'no_characters') return alert('Aucun personnage disponible dans cette collection.')
       return alert(`Erreur : ${msg}`)
     }
 
@@ -206,27 +226,17 @@ function Pack() {
     </div>
   )
 
-  // 🔧 PAGE DE MAINTENANCE
-  if (PACKS_DISABLED) {
-    return (
-      <div className="p-8 flex flex-col items-center justify-center" style={{ minHeight: '60vh' }}>
-        <div className="text-center max-w-md">
-          <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🔧</div>
-          <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '2.5rem', color: '#fbc059', letterSpacing: '0.05em' }}>
-            MAINTENANCE
-          </h1>
-          <p className="font-mono text-sm mt-3" style={{ color: 'rgba(255,255,255,0.4)', lineHeight: 1.8 }}>
-            Les packs sont temporairement désactivés.<br />
-            Une mise à jour des raretés est en cours.<br />
-            Reviens très bientôt !
-          </p>
-          <div className="mt-6 px-4 py-2 rounded-xl font-mono text-xs" style={{ background: 'rgba(251,192,89,0.06)', border: '1px solid rgba(251,192,89,0.15)', color: 'rgba(251,192,89,0.5)' }}>
-            Tes packs actuels sont conservés et ne seront pas perdus.
-          </div>
-        </div>
+  if (PACKS_DISABLED) return (
+    <div className="p-8 flex flex-col items-center justify-center" style={{ minHeight: '60vh' }}>
+      <div className="text-center max-w-md">
+        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🔧</div>
+        <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '2.5rem', color: '#fbc059', letterSpacing: '0.05em' }}>MAINTENANCE</h1>
+        <p className="font-mono text-sm mt-3" style={{ color: 'rgba(255,255,255,0.4)', lineHeight: 1.8 }}>
+          Les packs sont temporairement désactivés.<br />Reviens très bientôt !
+        </p>
       </div>
-    )
-  }
+    </div>
+  )
 
   return (
     <div className="p-8">
@@ -255,14 +265,28 @@ function Pack() {
 
       {phase === 'idle' && (
         <>
+          {collections.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <p style={{ fontSize: '3rem' }}>📦</p>
+              <p className="font-mono text-sm text-center" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                Aucune collection disponible pour le moment.<br />Reviens bientôt !
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-4 mb-8">
+              {collections.map(col => (
+                <CollectionBooster
+                  key={col.id}
+                  collection={col}
+                  selected={selectedCollection === col.id}
+                  onClick={() => openPack(col)}
+                  disabled={resources?.packs_available <= 0 || loading}
+                />
+              ))}
+            </div>
+          )}
           <HowToGetPacks />
           <DropRates />
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mt-8 mb-8">
-            <Booster server="general" selected={selectedServer === 'general'} onClick={() => { setSelectedServer('general'); openPackFor('general') }} disabled={resources?.packs_available <= 0 || loading} />
-            {servers.map(s => (
-              <Booster key={s} server={s} selected={selectedServer === s} onClick={() => { setSelectedServer(s); openPackFor(s) }} disabled={resources?.packs_available <= 0 || loading} />
-            ))}
-          </div>
         </>
       )}
 
@@ -276,11 +300,9 @@ function Pack() {
             ))}
           </div>
           {phase === 'done' && (
-            <button
-              onClick={() => { setPhase('idle'); setCards([]); setSelectedServer(null) }}
+            <button onClick={() => { setPhase('idle'); setCards([]); setSelectedCollection(null) }}
               className="px-8 py-3 rounded-xl font-mono text-xs transition-all hover:opacity-80"
-              style={{ border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }}
-            >
+              style={{ border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }}>
               RETOUR
             </button>
           )}
