@@ -49,6 +49,42 @@ function DropRates() {
   )
 }
 
+function HowToGetPacks() {
+  return (
+    <div className="mt-6 rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <p className="font-mono text-[10px] tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.25)' }}>COMMENT OBTENIR DES PACKS ?</p>
+      <div className="flex flex-col gap-3">
+
+        {/* Connexion quotidienne */}
+        <div className="flex items-start gap-3">
+          <span style={{ fontSize: '1.1rem', lineHeight: 1.2 }}>📅</span>
+          <div>
+            <p className="font-mono text-xs font-bold" style={{ color: '#fbc059' }}>Connexion quotidienne</p>
+            <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>
+              Connecte-toi chaque jour sur RPédia pour recevoir automatiquement des packs gratuits.
+            </p>
+          </div>
+        </div>
+
+        {/* Séparateur */}
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.04)' }} />
+
+        {/* Discord */}
+        <div className="flex items-start gap-3">
+          <span style={{ fontSize: '1.1rem', lineHeight: 1.2 }}>💬</span>
+          <div>
+            <p className="font-mono text-xs font-bold" style={{ color: '#7c6fff' }}>Autres moyens à venir</p>
+            <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>
+              Des événements et récompenses supplémentaires seront annoncés sur le Discord.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
 function Booster({ server, selected, onClick, disabled }) {
   const isGeneral = server === 'general'
   const accent = isGeneral ? '#fbc059' : '#7c6fff'
@@ -96,6 +132,7 @@ function Pack() {
   const [phase, setPhase] = useState('idle')
   const [servers, setServers] = useState([])
   const [selectedServer, setSelectedServer] = useState(null)
+  const [dailyClaimed, setDailyClaimed] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -114,20 +151,28 @@ function Pack() {
 
   async function fetchResources(userId) {
     const { data } = await supabase.from('resources').select('*').eq('user_id', userId).maybeSingle()
-    if (data) { setResources(data); return }
-    const { data: newData } = await supabase.from('resources').insert([{ user_id: userId, packs_available: 1 }]).select().maybeSingle()
-    setResources(newData)
+    if (data) {
+      setResources(data)
+    } else {
+      const { data: newData } = await supabase.from('resources').insert([{ user_id: userId, packs_available: 1 }]).select().maybeSingle()
+      setResources(newData)
+    }
+
+    // Réclame les packs quotidiens automatiquement
+    const { data: daily } = await supabase.rpc('claim_daily_packs', { p_user_id: userId })
+    if (daily?.claimed) {
+      setResources(prev => ({ ...prev, packs_available: daily.packs_available }))
+      setDailyClaimed(true)
+    }
   }
 
-  async function openPack() {
-    if (!user || !resources || resources.packs_available <= 0 || !selectedServer) return
+  async function openPackFor(server) {
+    if (!user || !resources || resources.packs_available <= 0 || !server) return
     setLoading(true)
 
-    // ── Appel unique et atomique via la fonction SQL ──────────────────────────
-    // Une seule requête au lieu de 5-6 : pas de race condition, pas de surcharge
     const { data, error } = await supabase.rpc('open_pack', {
       p_user_id: user.id,
-      p_server:  selectedServer,
+      p_server:  server,
     })
 
     if (error || data?.error) {
@@ -200,27 +245,24 @@ function Pack() {
         </div>
       </div>
 
+      {dailyClaimed && (
+        <div className="mb-6 px-4 py-3 rounded-xl font-mono text-xs flex items-center gap-3"
+          style={{ background: 'rgba(251,192,89,0.08)', border: '1px solid rgba(251,192,89,0.2)', color: '#fbc059' }}>
+          <span style={{ fontSize: '1.2rem' }}>🎁</span>
+          <span>Packs quotidiens réclamés ! Reviens demain pour en obtenir d'autres.</span>
+        </div>
+      )}
+
       {phase === 'idle' && (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mb-8">
-            <Booster server="general" selected={selectedServer === 'general'} onClick={() => setSelectedServer('general')} disabled={resources?.packs_available <= 0} />
+          <HowToGetPacks />
+          <DropRates />
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mt-8 mb-8">
+            <Booster server="general" selected={selectedServer === 'general'} onClick={() => { setSelectedServer('general'); openPackFor('general') }} disabled={resources?.packs_available <= 0 || loading} />
             {servers.map(s => (
-              <Booster key={s} server={s} selected={selectedServer === s} onClick={() => setSelectedServer(s)} disabled={resources?.packs_available <= 0} />
+              <Booster key={s} server={s} selected={selectedServer === s} onClick={() => { setSelectedServer(s); openPackFor(s) }} disabled={resources?.packs_available <= 0 || loading} />
             ))}
           </div>
-          <div className="flex flex-col items-center">
-            {selectedServer && (
-              <button
-                onClick={openPack}
-                disabled={loading}
-                className="px-12 py-4 rounded-2xl font-mono font-bold uppercase text-sm transition-all duration-200 hover:opacity-90 disabled:opacity-50"
-                style={{ background: '#fbc059', color: '#0a0a0a' }}
-              >
-                {loading ? 'Ouverture...' : `Ouvrir pack ${selectedServer}`}
-              </button>
-            )}
-          </div>
-          <DropRates />
         </>
       )}
 
