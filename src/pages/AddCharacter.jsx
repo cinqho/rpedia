@@ -103,13 +103,10 @@ function AddCharacter() {
       if (value.trim().length < 2) return
       setNameStatus('checking')
       debounceRef.current = setTimeout(async () => {
-        const { data } = await supabase
-          .from('characters')
-          .select('id')
-          .ilike('rp_name', value.trim())
-          .in('status', ['approved', 'pending'])
-          .limit(1)
-        setNameStatus(data && data.length > 0 ? 'taken' : 'free')
+        const { data, error } = await supabase
+          .rpc('check_rp_name_exists', { p_name: value.trim() })
+        console.log('rpc result:', data, error)
+        setNameStatus(data === true ? 'taken' : 'free')
       }, 500)
     }
   }
