@@ -1,8 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 import CharacterCard from '../components/CharacterCard'
 import CharacterModal from '../components/CharacterModal'
-import { useDeck } from '../context/DeckContext'
 
 const TEAM_SIZE = 5
 
@@ -336,14 +335,60 @@ function RecyclerTab({ deck, user, onRecycled }) {
 
 // ─── Page Deck ────────────────────────────────────────────────────────────────
 function Deck() {
-  const { user, deck, team, setTeam, loading, fetchAll, buildGrouped } = useDeck()
-  const grouped = buildGrouped(deck)
+  const [user, setUser] = useState(null)
+  const [deck, setDeck] = useState([])
+  const [grouped, setGrouped] = useState([])
+  const [team, setTeam] = useState(Array(TEAM_SIZE).fill(null))
+  const [loading, setLoading] = useState(true)
   const [savingSlot, setSavingSlot] = useState(null)
   const [search, setSearch] = useState('')
   const [editMode, setEditMode] = useState(false)
   const [raritySort, setRaritySort] = useState(null)
   const [selectedCharacter, setSelectedCharacter] = useState(null)
-  const [activeTab, setActiveTab] = useState('inventaire')
+  const [activeTab, setActiveTab] = useState('inventaire') // 'inventaire' | 'recycleur'
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      const u = data.session?.user ?? null
+      setUser(u)
+      if (u) fetchAll(u.id)
+      else setLoading(false)
+    })
+  }, [])
+
+  function buildGrouped(deckData) {
+    const map = {}
+    for (const entry of deckData) {
+      const id = entry.character_id
+      if (!map[id]) map[id] = { ...entry, count: 1 }
+      else map[id].count += 1
+    }
+    return Object.values(map)
+  }
+
+  async function fetchAll(userId) {
+    setLoading(true)
+    const [{ data: deckData }, { data: teamData }] = await Promise.all([
+      supabase
+        .from('deck')
+        .select('id, character_id, obtained_at, characters(*)')
+        .eq('user_id', userId)
+        .order('obtained_at', { ascending: false }),
+      supabase
+        .from('team')
+        .select('slot, character_id, characters(*)')
+        .eq('user_id', userId),
+    ])
+
+    const cleaned = (deckData || []).filter(e => e.characters !== null)
+    setDeck(cleaned)
+    setGrouped(buildGrouped(cleaned))
+
+    const teamArr = Array(TEAM_SIZE).fill(null)
+    for (const entry of teamData || []) teamArr[entry.slot - 1] = entry.characters
+    setTeam(teamArr)
+    setLoading(false)
+  }
 
   async function toggleTeam(character) {
     const alreadyInSlot = team.findIndex(c => c?.id === character.id)

@@ -63,29 +63,6 @@ export function DeckProvider({ children }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Realtime sur le deck
-  useEffect(() => {
-    if (!user) return
-
-    const channel = supabase
-      .channel('deck-realtime')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'deck',
-        filter: `user_id=eq.${user.id}`,
-      }, () => fetchAll(user.id))
-      .on('postgres_changes', {
-        event: 'DELETE',
-        schema: 'public',
-        table: 'deck',
-        filter: `user_id=eq.${user.id}`,
-      }, () => fetchAll(user.id))
-      .subscribe()
-
-    return () => supabase.removeChannel(channel)
-  }, [user])
-
   return (
     <DeckContext.Provider value={{ user, deck, team, setTeam, loading, fetchAll, buildGrouped }}>
       {children}
