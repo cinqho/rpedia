@@ -41,7 +41,7 @@ function RecyclerTab({ deck, user, onRecycled }) {
   const countByRarity = {}
   const seenOnce = {}
   for (const entry of deckAsc) {
-    const r = normalizeRarity(entry.characters_with_likes?.rarity)
+    const r = normalizeRarity(entry.characters?.rarity)
     if (r === 'SECRET') continue
     const cid = entry.character_id
     if (!seenOnce[cid]) { seenOnce[cid] = true; continue } // 1er exemplaire protégé
@@ -68,14 +68,14 @@ function RecyclerTab({ deck, user, onRecycled }) {
     // Récupérer les entrées deck de cette rareté (IDs de lignes)
     const { data: deckRows } = await supabase
       .from('deck')
-      .select('id, character_id, characters_with_likes(rarity)')
+      .select('id, character_id, characters(rarity)')
       .eq('user_id', user.id)
       .order('obtained_at', { ascending: true })
       .limit(500)
 
     // Filtrer par rareté exacte (en excluant SECRET)
     const matching = (deckRows || []).filter(row => {
-      const r = normalizeRarity(row.characters_with_likes?.rarity)
+      const r = normalizeRarity(row.characters?.rarity)
       return r === selectedRarity
     })
 
@@ -371,21 +371,21 @@ function Deck() {
     const [{ data: deckData }, { data: teamData }] = await Promise.all([
       supabase
         .from('deck')
-        .select('id, character_id, obtained_at, characters_with_likes(*)')
+        .select('id, character_id, obtained_at, characters(*)')
         .eq('user_id', userId)
         .order('obtained_at', { ascending: false }),
       supabase
         .from('team')
-        .select('slot, character_id, characters_with_likes(*)')
+        .select('slot, character_id, characters(*)')
         .eq('user_id', userId),
     ])
 
-    const cleaned = (deckData || []).filter(e => e.characters_with_likes !== null)
+    const cleaned = (deckData || []).filter(e => e.characters !== null)
     setDeck(cleaned)
     setGrouped(buildGrouped(cleaned))
 
     const teamArr = Array(TEAM_SIZE).fill(null)
-    for (const entry of teamData || []) teamArr[entry.slot - 1] = entry.characters_with_likes
+    for (const entry of teamData || []) teamArr[entry.slot - 1] = entry.characters
     setTeam(teamArr)
     setLoading(false)
   }
@@ -445,12 +445,12 @@ function Deck() {
   const doublesCount = totalCount - uniqueCount
 
   let filtered = grouped.filter(entry =>
-    !search || entry.characters_with_likes?.rp_name?.toLowerCase().includes(search.toLowerCase())
+    !search || entry.characters?.rp_name?.toLowerCase().includes(search.toLowerCase())
   )
   if (raritySort !== null) {
     filtered = [...filtered].sort((a, b) => {
-      const ri = RARITY_ORDER.indexOf(normalizeRarity(a.characters_with_likes?.rarity))
-      const rj = RARITY_ORDER.indexOf(normalizeRarity(b.characters_with_likes?.rarity))
+      const ri = RARITY_ORDER.indexOf(normalizeRarity(a.characters?.rarity))
+      const rj = RARITY_ORDER.indexOf(normalizeRarity(b.characters?.rarity))
       return raritySort === 'desc' ? rj - ri : ri - rj
     })
   }
@@ -460,7 +460,7 @@ function Deck() {
 
   // Compter les recyclables dispo
   const recyclableCount = deck.filter(e => {
-    const r = normalizeRarity(e.characters_with_likes?.rarity)
+    const r = normalizeRarity(e.characters?.rarity)
     return r !== 'SECRET' && RECYCLE_CHAIN.slice(0, -1).includes(r)
   }).length
 
@@ -612,7 +612,7 @@ function Deck() {
           {!loading && grouped.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {filtered.map(entry => {
-                const character = entry.characters_with_likes
+                const character = entry.characters
                 if (!character) return null
                 const inTeam = team.some(c => c?.id === character?.id)
                 const count = entry.count || 1

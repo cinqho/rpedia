@@ -1,7 +1,7 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
-import { supabase } from '../supabase'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import CharacterCard from '../components/CharacterCard'
 import CharacterModal from '../components/CharacterModal'
+import { useCharacters } from '../context/CharactersContext'
 
 const universes = ['Tous', 'Naruto', 'One Piece', 'Bleach', 'Dragon Ball', 'Autre']
 
@@ -12,8 +12,7 @@ const RARITY_ORDER = [
 const PAGE_SIZE = 20
 
 function Characters() {
-  const [characters, setCharacters] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { characters, loading } = useCharacters()
   const [selected, setSelected] = useState(null)
   const [search, setSearch] = useState('')
   const [universeFilter, setUniverseFilter] = useState('Tous')
@@ -22,20 +21,6 @@ function Characters() {
   const [page, setPage] = useState(1)
 
   const observerRef = useRef(null)
-
-  useEffect(() => {
-    async function fetchCharacters() {
-      const { data, error } = await supabase
-        .from('characters_with_likes')
-        .select('*')
-        .eq('status', 'approved')
-        .order('created_at', { ascending: false })
-      if (error) console.error(error)
-      else setCharacters(data)
-      setLoading(false)
-    }
-    fetchCharacters()
-  }, [])
 
   // Reset page quand les filtres changent
   useEffect(() => {
