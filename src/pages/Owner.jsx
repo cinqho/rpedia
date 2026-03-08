@@ -583,6 +583,7 @@ function GiveCardTab() {
   const [given, setGiven] = useState(false)
   const [error, setError] = useState(null)
   const [confirmGive, setConfirmGive] = useState(false)
+  const [quantity, setQuantity] = useState(1)
 
   const rarityColors = {
     NORMAL: '#9CA3AF', VETERAN: '#34D399', ELITE: '#38BDF8',
@@ -622,11 +623,14 @@ function GiveCardTab() {
     setGiving(true)
     setError(null)
 
-    const { error: err } = await supabase.from('deck').insert({
+    const n = Math.max(1, parseInt(quantity) || 1)
+    const rows = Array.from({ length: n }, () => ({
       user_id: selectedPlayer.id,
       character_id: selectedCard.id,
       obtained_at: new Date().toISOString(),
-    })
+    }))
+
+    const { error: err } = await supabase.from('deck').insert(rows)
 
     if (err) setError(err.message)
     else {
@@ -640,6 +644,7 @@ function GiveCardTab() {
         setCardSearch('')
         setPlayerResults([])
         setCardResults([])
+        setQuantity(1)
       }, 2500)
     }
     setGiving(false)
@@ -738,15 +743,25 @@ function GiveCardTab() {
       {/* Résumé + confirmation */}
       {selectedPlayer && selectedCard && !given && (
         <div className="p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-          <p className="font-mono text-xs mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            Donner <span style={{ color }}>{selectedCard.rp_name}</span> ({selectedCard.rarity || 'NORMAL'}) à <span style={{ color: '#34D399' }}>{selectedPlayer.discord_username}</span>
-          </p>
+          <div className="flex items-center gap-3 mb-3 flex-wrap">
+            <p className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              Donner <span style={{ color }}>{selectedCard.rp_name}</span> ({selectedCard.rarity || 'NORMAL'}) à <span style={{ color: '#34D399' }}>{selectedPlayer.discord_username}</span>
+            </p>
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Quantité :</span>
+              <input
+                type="number" min="1" max="99" value={quantity}
+                onChange={e => { setQuantity(e.target.value); setConfirmGive(false) }}
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#fbc059', width: 56, padding: '4px 8px', borderRadius: 8, fontFamily: 'monospace', fontSize: '0.8rem', outline: 'none', textAlign: 'center' }}
+              />
+            </div>
+          </div>
           {error && <p className="font-mono text-xs mb-3" style={{ color: '#FF2D55' }}>{error}</p>}
           {!confirmGive ? (
             <button onClick={() => setConfirmGive(true)}
               className="px-6 py-2 rounded-lg font-mono text-xs font-bold tracking-widest uppercase transition-all hover:opacity-90"
               style={{ background: '#fbc059', color: '#0a0a0a' }}>
-              Donner la carte
+              {parseInt(quantity) > 1 ? `Donner ×${quantity} cartes` : 'Donner la carte'}
             </button>
           ) : (
             <div className="flex items-center gap-2">
@@ -768,7 +783,7 @@ function GiveCardTab() {
 
       {given && (
         <div className="p-4 rounded-xl text-center" style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)' }}>
-          <p className="font-mono text-sm" style={{ color: '#34D399' }}>✓ Carte donnée avec succès !</p>
+          <p className="font-mono text-sm" style={{ color: '#34D399' }}>✓ {parseInt(quantity) > 1 ? `×${quantity} cartes données` : 'Carte donnée'} avec succès !</p>
         </div>
       )}
     </div>
