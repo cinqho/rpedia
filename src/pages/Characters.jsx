@@ -1,21 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { supabase } from '../supabase'
 import CharacterCard from '../components/CharacterCard'
 import CharacterModal from '../components/CharacterModal'
 
 const universes = ['Tous', 'Naruto', 'One Piece', 'Bleach', 'Dragon Ball', 'Autre']
 
-// Du plus commun au plus rare (ordre croissant de rareté)
 const RARITY_ORDER = [
-  'NORMAL',
-  'VETERAN',
-  'ELITE',
-  'EPIQUE',
-  'LEGENDAIRE',
-  'ANCESTRAL',
-  'ICONE',
+  'NORMAL', 'VETERAN', 'ELITE', 'EPIQUE', 'LEGENDAIRE', 'ANCESTRAL', 'ICONE',
 ]
-// SECRET exclu volontairement : caché dans la liste publique
+
+const PAGE_SIZE = 20
 
 function Characters() {
   const [characters, setCharacters] = useState([])
@@ -24,7 +18,10 @@ function Characters() {
   const [search, setSearch] = useState('')
   const [universeFilter, setUniverseFilter] = useState('Tous')
   const [serverFilter, setServerFilter] = useState('')
-  const [raritySort, setRaritySort] = useState(null) // null | 'asc' | 'desc'
+  const [raritySort, setRaritySort] = useState(null)
+  const [page, setPage] = useState(1)
+
+  const observerRef = useRef(null)
 
   useEffect(() => {
     async function fetchCharacters() {
@@ -40,19 +37,22 @@ function Characters() {
     fetchCharacters()
   }, [])
 
+  // Reset page quand les filtres changent
+  useEffect(() => {
+    setPage(1)
+  }, [search, universeFilter, serverFilter, raritySort])
+
   function cycleSort() {
     setRaritySort(prev => prev === null ? 'desc' : prev === 'desc' ? 'asc' : null)
   }
 
   const servers = ['Tous', ...new Set(characters.map(c => c.server).filter(Boolean))]
 
-  // Normalise les anciennes raretés supprimées vers NORMAL
   function normalizeRarity(r) {
     return RARITY_ORDER.includes(r) ? r : 'NORMAL'
   }
 
   let filtered = characters
-    // Masque les personnages SECRET de la liste publique
     .filter(c => c.rarity !== 'SECRET')
     .filter(c => {
       const matchSearch = c.rp_name.toLowerCase().includes(search.toLowerCase()) || (c.player && c.player.toLowerCase().includes(search.toLowerCase()))
@@ -69,13 +69,27 @@ function Characters() {
     })
   }
 
+  const visible = filtered.slice(0, page * PAGE_SIZE)
+  const hasMore = visible.length < filtered.length
+
+  // Infinite scroll via IntersectionObserver
+  const handleSentinel = useCallback(node => {
+    if (observerRef.current) observerRef.current.disconnect()
+    if (!node) return
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(p => p + 1)
+      }
+    }, { rootMargin: '200px' })
+    observerRef.current.observe(node)
+  }, [hasMore])
+
   const sortLabel = raritySort === null ? 'Rareté' : raritySort === 'desc' ? 'Rareté ↓' : 'Rareté ↑'
   const sortActive = raritySort !== null
 
   return (
     <div className="p-8">
 
-      {/* Header */}
       <div className="mb-6">
         <h1 className="text-white mb-1" style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '3rem', letterSpacing: '0.05em' }}>
           PERSON<span style={{ color: '#fbc059' }}>NAGES</span>
@@ -85,7 +99,6 @@ function Characters() {
         </p>
       </div>
 
-      {/* Barre de recherche + tri */}
       <div className="flex gap-2 mb-4">
         <input
           value={search}
@@ -107,7 +120,6 @@ function Characters() {
         </button>
       </div>
 
-      {/* Filtres univers */}
       <div className="flex gap-2 flex-wrap mb-3">
         {universes.map(u => (
           <button key={u} onClick={() => setUniverseFilter(u)}
@@ -122,7 +134,6 @@ function Characters() {
         ))}
       </div>
 
-      {/* Filtres serveurs */}
       <div className="flex gap-2 flex-wrap mb-8">
         {servers.map(s => (
           <button key={s} onClick={() => setServerFilter(s)}
@@ -150,13 +161,29 @@ function Characters() {
       )}
 
       {!loading && filtered.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {filtered.map(character => (
-            <div key={character.id} onClick={() => setSelected(character)} className="cursor-pointer">
-              <CharacterCard character={character} />
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {visible.map(character => (
+              <div key={character.id} onClick={() => setSelected(character)} className="cursor-pointer">
+                <CharacterCard character={character} />
+              </div>
+            ))}
+          </div>
+
+          {hasMore && (
+            <div ref={handleSentinel} className="flex justify-center py-8">
+              <p className="font-mono text-xs animate-pulse" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                Chargement...
+              </p>
             </div>
-          ))}
-        </div>
+          )}
+
+          {!hasMore && filtered.length > PAGE_SIZE && (
+            <p className="text-center font-mono text-xs mt-8" style={{ color: 'rgba(255,255,255,0.1)' }}>
+              — {filtered.length} personnages affichés —
+            </p>
+          )}
+        </>
       )}
 
       <CharacterModal character={selected} onClose={() => setSelected(null)} />
