@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/react';
 import Sidebar from './components/Sidebar.jsx'
 import PageWrapper from './components/PageWrapper.jsx'
 import { CharactersProvider } from './context/CharactersContext.jsx'
+import { DeckProvider } from './context/DeckContext.jsx'
 
 import Home from './pages/Home.jsx'
 import About from './pages/About.jsx'
@@ -20,6 +21,7 @@ function App() {
   return (
     <BrowserRouter>
       <CharactersProvider>
+        <DeckProvider>
         <div style={{ backgroundColor: '#0a0a0a', minHeight: '100vh' }}>
           <Sidebar />
 
@@ -38,6 +40,7 @@ function App() {
 
           <Analytics />
         </div>
+        </DeckProvider>
       </CharactersProvider>
     </BrowserRouter>
   )
